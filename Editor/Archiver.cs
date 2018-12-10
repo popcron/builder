@@ -12,7 +12,7 @@ namespace Popcron.Builder
 {
     public class Archiver
     {
-        public static void CreateSample(string input, string output, string platform)
+        public static void Zip(string input, string output, string platform)
         {
             FileStream fsOut = File.Create(output);
             ZipOutputStream zipStream = new ZipOutputStream(fsOut);
@@ -23,7 +23,7 @@ namespace Popcron.Builder
             // make the entries relative to the starting folder.
             // To include the full path for each entry up to the drive root, assign folderOffset = 0.
             int length = Path.GetFileNameWithoutExtension(input).Length + 1;
-            int folderOffset = input.Length + (input.EndsWith("\\") ? 0 : 1) - length;
+            int folderOffset = input.Length + (input.EndsWith("/") ? 0 : 1) - length;
             if (platform == "webgl")
             {
                 folderOffset = input.Length;

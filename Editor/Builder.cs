@@ -12,6 +12,7 @@ using Application = UnityEngine.Application;
 using Debug = UnityEngine.Debug;
 using UnityEngine.SceneManagement;
 using UnityEditor.Build.Reporting;
+using System.Threading.Tasks;
 
 namespace Popcron.Builder
 {
@@ -19,9 +20,10 @@ namespace Popcron.Builder
     {
         private const string PlayOnBuildKey = "Popcron.Builder.PlayOnBuild";
         private const string BuildingKey = "Popcron.Builder.Building";
+        private const string UploadingKey = "Popcron.Builder.Uploading";
         private const string BuildModeKey = "Popcron.Builder.BuildMode";
+        private const string LogKey = "Popcron.Builder.Log";
 
-        private static bool? building = null;
         private static bool? playOnBuild = null;
         private static List<Service> services = null;
         private static ScriptingImplementation? scriptingImplementation = null;
@@ -32,7 +34,7 @@ namespace Popcron.Builder
             {
                 if (playOnBuild == null)
                 {
-                    playOnBuild = EditorPrefs.GetBool(PlayOnBuildKey, false);
+                    playOnBuild = EditorPrefs.GetBool(PlayerSettings.productGUID + PlayOnBuildKey, false);
                 }
 
                 return playOnBuild.Value;
@@ -42,8 +44,20 @@ namespace Popcron.Builder
                 if (playOnBuild != value)
                 {
                     playOnBuild = value;
-                    EditorPrefs.GetBool(PlayOnBuildKey, value);
+                    EditorPrefs.SetBool(PlayerSettings.productGUID + PlayOnBuildKey, value);
                 }
+            }
+        }
+
+        public static bool Uploading
+        {
+            get
+            {
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + UploadingKey, false);
+            }
+            set
+            {
+                EditorPrefs.SetBool(PlayerSettings.productGUID + UploadingKey, value);
             }
         }
 
@@ -51,20 +65,11 @@ namespace Popcron.Builder
         {
             get
             {
-                if (building == null)
-                {
-                    building = EditorPrefs.GetBool(BuildingKey, false);
-                }
-
-                return building.Value;
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + BuildingKey, false);
             }
             set
             {
-                if (building != value)
-                {
-                    building = value;
-                    EditorPrefs.GetBool(BuildingKey, value);
-                }
+                EditorPrefs.SetBool(PlayerSettings.productGUID + BuildingKey, value);
             }
         }
 
@@ -74,7 +79,7 @@ namespace Popcron.Builder
             {
                 if (scriptingImplementation == null)
                 {
-                    scriptingImplementation = (ScriptingImplementation)EditorPrefs.GetInt(BuildModeKey, 0);
+                    scriptingImplementation = (ScriptingImplementation)EditorPrefs.GetInt(PlayerSettings.productGUID + BuildModeKey, 0);
                 }
 
                 return scriptingImplementation.Value;
@@ -84,7 +89,7 @@ namespace Popcron.Builder
                 if (scriptingImplementation != value)
                 {
                     scriptingImplementation = value;
-                    EditorPrefs.SetInt(BuildModeKey, (int)value);
+                    EditorPrefs.SetInt(PlayerSettings.productGUID + BuildModeKey, (int)value);
                 }
             }
         }
@@ -115,6 +120,73 @@ namespace Popcron.Builder
 
                 return services;
             }
+        }
+
+        internal static List<(string text, MessageType type)> Log
+        {
+            get
+            {
+                const char Delimeter = (char)0;
+                string value = EditorPrefs.GetString(LogKey);
+                string[] array = value.Split('\n');
+                List<(string text, MessageType type)> list = new List<(string text, MessageType type)>();
+                for (int i = 0; i < array.Length; i++)
+                {
+                    if (array[i].Contains(Delimeter))
+                    {
+                        string text = array[i].Split(Delimeter)[0];
+                        MessageType type = (MessageType)int.Parse(array[i].Split(Delimeter)[1]);
+                        list.Add((text, type));
+                    }
+                }
+                return list;
+            }
+            private set
+            {
+                const char Delimeter = (char)0;
+                string[] array = new string[value.Count];
+                for (int i = 0; i < value.Count; i++)
+                {
+                    array[i] = value[i].text + Delimeter + ((int)value[i].type);
+                }
+
+                string data = string.Join("\n", array);
+                EditorPrefs.SetString(LogKey, data);
+            }
+        }
+
+        internal static void Print(string text, MessageType type)
+        {
+            var list = Log;
+            list.Insert(0, (text, type));
+
+            if (list.Count > 10)
+            {
+                list.RemoveAt(list.Count - 1);
+            }
+
+            Log = list;
+        }
+
+        internal static void Clear()
+        {
+            var list = Log;
+            list.Clear();
+            Log = list;
+        }
+
+        internal static void Reset()
+        {
+            Clear();
+            PlayOnBuild = false;
+            Uploading = false;
+            Building = false;
+        }
+
+        [MenuItem("Popcron/Builder/Build")]
+        public static void Build()
+        {
+            Build("win");
         }
 
         [PostProcessBuild(1)]
@@ -159,19 +231,19 @@ namespace Popcron.Builder
                 Directory.CreateDirectory(root + "/Builds/" + platform);
             }
 
-            Debug.Log("Compressing " + path + " to " + exportZip);
+            Print("Compressing " + path + " to " + exportZip, MessageType.Info);
             if (target == BuildTarget.WebGL)
             {
-                Archiver.CreateSample(path + "/" + Settings.ExecutableName, exportZip, platform);
+                Archiver.Zip(path + "/" + Settings.ExecutableName, exportZip, platform);
             }
             else
             {
-                Archiver.CreateSample(path, exportZip, platform);
+                Archiver.Zip(path, exportZip, platform);
             }
 
             File.Copy(exportZip, archivedZip);
             EditorPrefs.SetString(Settings.GameName + "_builtArchive_" + platform, exportZip);
-            Debug.Log("Exported archive to : " + exportZip);
+            Print("Exported archive to : " + exportZip, MessageType.Info);
 
             Building = false;
             OnPostBuild(platform);
@@ -232,6 +304,7 @@ namespace Popcron.Builder
 
         public static void Build(string platform)
         {
+            Building = true;
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
 
@@ -281,11 +354,7 @@ namespace Popcron.Builder
             }
 
             //success
-            if (report.summary.result == BuildResult.Succeeded)
-            {
-                Building = true;
-            }
-            else
+            if (report.summary.result == BuildResult.Failed)
             {
                 Building = false;
             }
@@ -346,8 +415,9 @@ namespace Popcron.Builder
             return EditorPrefs.GetString(Settings.GameName + "_uploadVersion_" + platform);
         }
 
-        public static void Upload(string platform)
+        public static async void Upload(string platform)
         {
+            Uploading = true;
             string path = GetBuiltPath(platform);
             string version = GetBuiltVersion(platform);
 
@@ -356,14 +426,26 @@ namespace Popcron.Builder
 
             //run through list of services
             //and upload to the ones that are allowed
+            var tasks = new List<Task>();
             for (int i = 0; i < services.Count; i++)
             {
                 if (services[i].CanUploadTo)
                 {
-                    Debug.Log("Uploading to " + services[i].Name);
-                    services[i].Upload(path, version, platform);
+                    Print("Started uploading to " + services[i].Name, MessageType.Info);
+                    try
+                    {
+                        var task = services[i].Upload(path, version, platform);
+                        tasks.Add(task);
+                    }
+                    catch (Exception exception)
+                    {
+                        Print(services[i].Name + ": " + exception.Message, MessageType.Error);
+                    }
                 }
             }
+
+            await Task.WhenAll(tasks);
+            Uploading = false;
         }
 
         public static void Play(string platform)
@@ -377,7 +459,7 @@ namespace Popcron.Builder
             gameProcess.StartInfo.FileName = path;
             gameProcess.StartInfo.Arguments = "-logfile \"" + outputPath + "\"";
             gameProcess.Start();
-            Debug.Log("Launch at " + path);
+            Print("Launched game from " + path, MessageType.Info);
         }
 
         public static bool PlayExists(string platform)

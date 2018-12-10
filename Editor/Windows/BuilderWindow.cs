@@ -42,19 +42,6 @@ namespace Popcron.Builder
             Window.DrawHeader("", "");
             DrawVersionInformation();
 
-            //loop through services, and display their gui
-            bool consumedEvent = false;
-            for (int i = 0; i < Builder.Services.Count; i++)
-            {
-                consumedEvent |= Builder.Services[i].OnGUI();
-            }
-
-            //dont draw the builder ui if the ongui event was consumed
-            if (consumedEvent)
-            {
-                return;
-            }
-
             if (Builder.Building)
             {
                 EditorGUILayout.LabelField("Building...", EditorStyles.boldLabel);
@@ -65,10 +52,10 @@ namespace Popcron.Builder
 
             //loop through the services, and toggle each setting
             int uploadServices = 0;
-            for (int i = 0; i < Builder.Services.Count; i++)
+            foreach (Service service in Builder.Services)
             {
-                Builder.Services[i].CanUploadTo = EditorGUILayout.Toggle("Upload to " + Builder.Services[i].Name, Builder.Services[i].CanUploadTo);
-                if (Builder.Services[i].CanUploadTo)
+                service.CanUploadTo = EditorGUILayout.Toggle("Upload to " + service.Name, service.CanUploadTo);
+                if (service.CanUploadTo)
                 {
                     uploadServices++;
                 }
@@ -90,9 +77,9 @@ namespace Popcron.Builder
             GUILayout.Space(25);
 
             //upload button
-            if (Builder.UploadExists(platform) && uploadServices > 0)
+            if (Builder.UploadExists(platform) && uploadServices > 0 && !Builder.Uploading)
             {
-                if (GUILayout.Button("Upload", EditorStyles.miniButton, GUILayout.Height(20)))
+                if (GUILayout.Button("Upload", GUILayout.Height(40)))
                 {
                     Builder.Upload(platform);
                 }
@@ -101,14 +88,14 @@ namespace Popcron.Builder
             {
                 GUI.color = new Color(1f, 1f, 1f, 0.3f);
 
-                GUILayout.Button("Upload", EditorStyles.miniButton, GUILayout.Height(20));
+                GUILayout.Button("Upload", GUILayout.Height(40));
 
                 GUI.color = Color.white;
             }
 
             //build and play button
             GUILayout.BeginHorizontal();
-            if (!Builder.Building)
+            if (Builder.Building)
             {
                 GUI.color = new Color(1f, 1f, 1f, 0.3f);
 
@@ -145,15 +132,21 @@ namespace Popcron.Builder
             }
             GUILayout.EndHorizontal();
 
-            lastRect = GUILayoutUtility.GetLastRect();
+            //draw the message window
+            GUILayout.Space(50);
+            var rect = GUILayoutUtility.GetLastRect();
+            Window.DrawHeader("Log", "", rect.yMax);
 
-            //draw the urls for each service
-            for (int i = 0; i < Builder.Services.Count; i++)
+            float width = Mathf.Max(60f, Screen.width / 3f);
+            if (GUI.Button(new Rect(Screen.width - width, rect.yMax, width, 17), "Clear", EditorStyles.toolbarButton))
             {
-                if (GUI.Button(new Rect(0, lastRect.y + lastRect.height + 8 + i * 20, Screen.width, 20), "go to " + Builder.Services[i].Name, EditorStyles.toolbarButton))
-                {
-                    Application.OpenURL(Builder.Services[i].URL);
-                }
+                Builder.Clear();
+            }
+
+            GUILayout.Space(20);
+            foreach (var (text, type) in Builder.Log)
+            {
+                EditorGUILayout.HelpBox(text, type);
             }
         }
     }

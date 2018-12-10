@@ -7,129 +7,260 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 
-using Octokit;
+using System.Net.Http;
+using System.Threading;
+using System.Net;
 
 namespace Popcron.Builder
 {
     public class GitHubService : Service
     {
-        //github repo location
-        public const string GitHubOwner = "popcron";
-        public const string GitHubRepo = "gun-game";
+        [Serializable]
+        public class CreateRequest
+        {
+            public string tag_name = "";
+            public string target_commitish = "";
+            public string name = "";
+            public string body = "";
+            public bool draft = false;
+            public bool prerelease = false;
+        }
 
-        private bool login;
+        [Serializable]
+        public class ReleasesResponse
+        {
+            public List<Release> releases = new List<Release>();
+        }
 
-        private static string GitHubToken
+        [Serializable]
+        public class Release
+        {
+            public string url = "";
+            public string assets_url = "";
+            public string upload_url = "";
+            public string html_url = "";
+            public string id = "";
+            public string node_id = "";
+            public string tag_name = "";
+            public string target_commitish = "";
+            public string name = "";
+            public bool draft = false;
+            public bool prerelease = false;
+            public string created_at = "";
+            public string published_at = "";
+        }
+
+        private const string OwnerKey = "Popcron.Builder.GitHubService.Owner";
+        private const string RepositoryKey = "Popcron.Builder.GitHubService.Repository";
+        private const string TokenKey = "Popcron.Builder.GitHubService.Token";
+        private const string ShowTokenKey = "Popcron.Builder.GitHubService.ShowToken";
+        private const string UserAgent = "Popcron.Builder.GitHubService";
+
+        private static string owner = null;
+        private static string repository = null;
+        private static bool? showToken = null;
+
+        public static string Owner
         {
             get
             {
-                return EditorPrefs.GetString(GitHubOwner + ":" + GitHubRepo + "_githubToken", "");
+                if (owner == null)
+                {
+                    owner = EditorPrefs.GetString(PlayerSettings.productGUID + OwnerKey, PlayerSettings.companyName);
+                }
+
+                return owner;
             }
             set
             {
-                EditorPrefs.SetString(GitHubOwner + ":" + GitHubRepo + "_githubToken", value);
+                if (owner != value)
+                {
+                    owner = value;
+                    EditorPrefs.SetString(PlayerSettings.productGUID + OwnerKey, value);
+                }
+            }
+        }
+
+        public static string Repository
+        {
+            get
+            {
+                if (repository == null)
+                {
+                    repository = EditorPrefs.GetString(PlayerSettings.productGUID + RepositoryKey, PlayerSettings.productName);
+                }
+
+                return repository;
+            }
+            set
+            {
+                if (repository != value)
+                {
+                    repository = value;
+                    EditorPrefs.SetString(PlayerSettings.productGUID + RepositoryKey, value);
+                }
+            }
+        }
+
+        public static string Token
+        {
+            get
+            {
+                return EditorPrefs.GetString(PlayerSettings.productGUID + TokenKey);
+            }
+            set
+            {
+                EditorPrefs.SetString(PlayerSettings.productGUID + TokenKey, value);
+            }
+        }
+
+        public static bool ShowToken
+        {
+            get
+            {
+                if (showToken == null)
+                {
+                    showToken = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowTokenKey);
+                }
+
+                return showToken.Value;
+            }
+            set
+            {
+                if (showToken != value)
+                {
+                    showToken = value;
+                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowTokenKey, value);
+                }
             }
         }
 
         public override string Name => "GitHub";
 
-        public override string URL => "https://github.com/" + GitHubOwner + "/" + GitHubRepo;
+        public override string URL => "https://github.com/" + Owner + "/" + Repository;
 
         public override bool CanUploadTo
         {
             get
             {
-                return EditorPrefs.GetBool(Name + "_" + GitHubOwner + "_" + GitHubRepo, false);
+                return EditorPrefs.GetBool(Name + "_" + Owner + "_" + Repository, false);
             }
             set
             {
-                EditorPrefs.SetBool(Name + "_" + GitHubOwner + "_" + GitHubRepo, value);
+                EditorPrefs.SetBool(Name + "_" + Owner + "_" + Repository, value);
             }
         }
 
         public override async Task Upload(string path, string version, string platform)
         {
-            if (GitHubToken == "")
+            if (string.IsNullOrEmpty(Token))
             {
-                login = true;
-
-                //wait until the user logs in
-                while (login)
-                {
-                    await Task.Delay(10);
-                }
+                throw new Exception("GitHub service doesn't have an access token.");
             }
 
             string releaseName = "version " + version;
+            string auth = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(Owner + ":" + Token));
+            bool releaseAlreadyExists = false;
+            int releasesAmount = 0;
 
-            GitHubClient client = new GitHubClient(new ProductHeaderValue(GitHubRepo))
+            using (var httpClient = new HttpClient())
             {
-                Credentials = new Credentials(GitHubToken)
-            };
-
-            Repository repo = await client.Repository.Get(GitHubOwner, GitHubRepo);
-
-            //check if a release with this version already exists
-            bool exists = false;
-            IReadOnlyList<Release> releases = await client.Repository.Release.GetAll(GitHubOwner, GitHubRepo);
-            foreach (var release in releases)
-            {
-                if (release.Name == releaseName)
+                using (var request = new HttpRequestMessage(new HttpMethod("GET"), "https://api.github.com/repos/" + Owner + "/" + Repository + "/releases"))
                 {
-                    //already exists
-                    exists = true;
-                    break;
+                    request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+                    request.Headers.TryAddWithoutValidation("Authorization", auth);
+
+                    var response = await httpClient.SendAsync(request);
+                    using (var reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
+                    {
+                        string data = await reader.ReadToEndAsync();
+                        data = "{\"releases\":" + data + "}";
+                        var releases = JsonUtility.FromJson<ReleasesResponse>(data);
+                        releasesAmount = releases.releases.Count + 1;
+                        foreach (var release in releases.releases)
+                        {
+                            if (release.name == releaseName)
+                            {
+                                releaseAlreadyExists = true;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
 
-            if (!exists)
+            if (!releaseAlreadyExists)
             {
-                //create release
-                NewRelease newRelease = new NewRelease(version)
+                var createRequest = new CreateRequest
                 {
-                    Name = releaseName,
-                    Body = "",
-                    Draft = false,
-                    Prerelease = false
+                    name = releaseName,
+                    tag_name = "v" + releasesAmount
                 };
 
-                Release release = await client.Repository.Release.Create(GitHubOwner, GitHubRepo, newRelease);
-                Debug.Log("Created release with ID " + release.Id);
-
-                //update the release with a file
-                using (var archiveContents = File.OpenRead(path))
+                string postRequest = JsonUtility.ToJson(createRequest);
+                int id = 0;
+                using (var httpClient = new HttpClient())
                 {
-                    var assetUpload = new ReleaseAssetUpload()
+                    using (var request = new HttpRequestMessage(new HttpMethod("POST"), "https://api.github.com/repos/" + Owner + "/" + Repository + "/releases"))
                     {
-                        FileName = Path.GetFileName(path),
-                        ContentType = "application/zip",
-                        RawData = archiveContents
-                    };
+                        request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+                        request.Headers.TryAddWithoutValidation("Authorization", auth);
 
-                    var asset = await client.Repository.Release.UploadAsset(release, assetUpload);
-                    Debug.Log("Uploaded " + path + " to new release (" + release.Url + ")");
+                        request.Content = new StringContent(postRequest, Encoding.UTF8, "application/json");
+
+                        var response = await httpClient.SendAsync(request);
+                        using (var reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
+                        {
+                            string data = await reader.ReadToEndAsync();
+                            if (data.Contains("Validation Failed") && data.Contains("already_exists") && data.Contains("tag_name"))
+                            {
+                                Builder.Print("GitHub: Release with tag " + createRequest.tag_name + " already exists", MessageType.Error);
+                                return;
+                            }
+
+                            string scrapedId = data.Substring(data.IndexOf("id") + 4);
+                            id = int.Parse(scrapedId.Substring(0, scrapedId.IndexOf(",")));
+                        }
+                    }
                 }
+
+                string archiveName = Path.GetFileName(path);
+                byte[] archiveData = File.ReadAllBytes(path);
+                string url = "https://uploads.github.com/repos/" + Owner + "/" + Repository + "/releases/" + id + "/assets?name=" + archiveName;
+                using (var httpClient = new HttpClient())
+                {
+                    using (var request = new HttpRequestMessage(new HttpMethod("POST"), url))
+                    {
+                        request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+                        request.Headers.TryAddWithoutValidation("Authorization", auth);
+
+                        string stringData = Encoding.UTF8.GetString(archiveData);
+                        request.Content = new StringContent(stringData, Encoding.UTF8, "application/zip");
+
+                        var response = await httpClient.SendAsync(request);
+                    }
+                }
+
+                Builder.Print("GitHub: Finished", MessageType.Info);
             }
             else
             {
-                Debug.LogError("Release with version " + version + " already exists");
+                Builder.Print("GitHub: Release with version " + version + " already exists", MessageType.Error);
             }
         }
 
-        public override bool OnGUI()
+        public override void OnGUI()
         {
-            if (login)
+            Owner = EditorGUILayout.TextField("Owner", Owner);
+            Repository = EditorGUILayout.TextField("Repository", Repository);
+
+            ShowToken = EditorGUILayout.Foldout(ShowToken, "Token");
+            if (ShowToken)
             {
-                GitHubToken = EditorGUILayout.TextField("Token", GitHubToken);
-
-                if (GUILayout.Button("Set"))
-                {
-                    login = false;
-                }
-                return true;
+                EditorGUI.indentLevel++;
+                Token = EditorGUILayout.TextField(Token);
+                EditorGUI.indentLevel--;
             }
-
-            return false;
         }
     }
 }

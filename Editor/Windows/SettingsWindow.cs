@@ -41,7 +41,6 @@ namespace Popcron.Builder
             if (show)
             {
                 EditorGUI.indentLevel++;
-
                 var directories = list;
                 var clone = Clone(directories);
                 int count = clone.Count;
@@ -60,7 +59,6 @@ namespace Popcron.Builder
                 }
 
                 //draw the list
-                EditorGUI.indentLevel++;
 
                 for (int i = 0; i < clone.Count; i++)
                 {
@@ -79,7 +77,6 @@ namespace Popcron.Builder
                 }
 
                 EditorGUI.indentLevel--;
-                EditorGUI.indentLevel--;
             }
 
             return list;
@@ -88,20 +85,29 @@ namespace Popcron.Builder
         private void DrawBlacklistedDirectories()
         {
             bool show = Settings.ShowBlacklistedDirectories;
-            Settings.BlacklistedDirectories = DrawArray("Blacklisted directories", Settings.BlacklistedDirectories, ref show);
+            Settings.BlacklistedDirectories = DrawArray("Directories", Settings.BlacklistedDirectories, ref show);
             Settings.ShowBlacklistedDirectories = show;
         }
 
         private void DrawBlacklistedFiles()
         {
             bool show = Settings.ShowBlacklistedFiles;
-            Settings.BlacklistedFiles = DrawArray("Blacklisted files", Settings.BlacklistedFiles, ref show);
+            Settings.BlacklistedFiles = DrawArray("Files", Settings.BlacklistedFiles, ref show);
             Settings.ShowBlacklistedFiles = show;
         }
 
         private void OnGUI()
         {
+            Repaint();
+
             Window.DrawHeader("Settings", "");
+
+            float width = Mathf.Max(100f, Screen.width / 3f);
+            if (GUI.Button(new Rect(Screen.width - width, 0, width, 17), "Reset", EditorStyles.toolbarButton))
+            {
+                Builder.Reset();
+            }
+
             GUILayout.Space(20);
 
             //draw generic info
@@ -110,8 +116,24 @@ namespace Popcron.Builder
 
             EditorGUILayout.HelpBox("Game will be built as " + Settings.ExecutableName + ".exe", MessageType.Info);
 
+            EditorGUILayout.LabelField("Blacklists", EditorStyles.boldLabel);
+
             DrawBlacklistedDirectories();
             DrawBlacklistedFiles();
+
+            EditorGUILayout.LabelField("Services", EditorStyles.boldLabel);
+
+            //draw services settings
+            foreach (var service in Builder.Services)
+            {
+                service.Show = EditorGUILayout.Foldout(service.Show, service.Name);
+                if (service.Show)
+                {
+                    EditorGUI.indentLevel++;
+                    service.OnGUI();
+                    EditorGUI.indentLevel--;
+                }
+            }
         }
     }
 }
