@@ -161,7 +161,6 @@ namespace Popcron.Builder
             string releaseName = "version " + version;
             string auth = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(Owner + ":" + Token));
             bool releaseAlreadyExists = false;
-            int releasesAmount = 0;
 
             using (var httpClient = new HttpClient())
             {
@@ -176,7 +175,6 @@ namespace Popcron.Builder
                         string data = await reader.ReadToEndAsync();
                         data = "{\"releases\":" + data + "}";
                         var releases = JsonUtility.FromJson<ReleasesResponse>(data);
-                        releasesAmount = releases.releases.Count + 1;
                         foreach (var release in releases.releases)
                         {
                             if (release.name == releaseName)
@@ -194,7 +192,7 @@ namespace Popcron.Builder
                 var createRequest = new CreateRequest
                 {
                     name = releaseName,
-                    tag_name = "v" + releasesAmount
+                    tag_name = version
                 };
 
                 string postRequest = JsonUtility.ToJson(createRequest);
@@ -224,23 +222,25 @@ namespace Popcron.Builder
                     }
                 }
 
+                //upload asset to release
                 string archiveName = Path.GetFileName(path);
                 byte[] archiveData = File.ReadAllBytes(path);
                 string url = "https://uploads.github.com/repos/" + Owner + "/" + Repository + "/releases/" + id + "/assets?name=" + archiveName;
-                using (var httpClient = new HttpClient())
+
+                HttpWebRequest uploadRequest = (HttpWebRequest)WebRequest.Create(url);
+                uploadRequest.Method = "POST";
+                uploadRequest.UserAgent = UserAgent;
+                uploadRequest.Headers.Add("Authorization", auth);
+                uploadRequest.ContentType = "application/zip";
+                uploadRequest.ContentLength = archiveData.Length;
+
+                //write content data
+                using (Stream stream = await uploadRequest.GetRequestStreamAsync())
                 {
-                    using (var request = new HttpRequestMessage(new HttpMethod("POST"), url))
-                    {
-                        request.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
-                        request.Headers.TryAddWithoutValidation("Authorization", auth);
-
-                        string stringData = Encoding.UTF8.GetString(archiveData);
-                        request.Content = new StringContent(stringData, Encoding.UTF8, "application/zip");
-
-                        var response = await httpClient.SendAsync(request);
-                    }
+                    await stream.WriteAsync(archiveData, 0, archiveData.Length);
                 }
 
+                await uploadRequest.GetResponseAsync();
                 Builder.Print("GitHub: Finished", MessageType.Info);
             }
             else
