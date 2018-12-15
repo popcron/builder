@@ -34,7 +34,7 @@ namespace Popcron.Builder
             {
                 if (gameName == null)
                 {
-                    gameName = EditorPrefs.GetString(GameNameKey, PlayerSettings.productName);
+                    gameName = EditorPrefs.GetString(PlayerSettings.productGUID + GameNameKey, PlayerSettings.productName);
                 }
 
                 return gameName;
@@ -44,7 +44,7 @@ namespace Popcron.Builder
                 if (gameName != value)
                 {
                     gameName = value;
-                    EditorPrefs.SetString(GameNameKey, value);
+                    EditorPrefs.SetString(PlayerSettings.productGUID + GameNameKey, value);
                 }
             }
         }
@@ -58,7 +58,7 @@ namespace Popcron.Builder
             {
                 if (executableName == null)
                 {
-                    executableName = EditorPrefs.GetString(ExecutableNameKey, PlayerSettings.productName);
+                    executableName = EditorPrefs.GetString(PlayerSettings.productGUID + ExecutableNameKey, PlayerSettings.productName);
                 }
 
                 return executableName;
@@ -68,7 +68,7 @@ namespace Popcron.Builder
                 if (executableName != value)
                 {
                     executableName = value;
-                    EditorPrefs.SetString(ExecutableNameKey, value);
+                    EditorPrefs.SetString(PlayerSettings.productGUID + ExecutableNameKey, value);
                 }
             }
         }
@@ -82,7 +82,7 @@ namespace Popcron.Builder
             {
                 if (blacklistedDirectories == null)
                 {
-                    string value = EditorPrefs.GetString(BlacklistedDirectoriesKey);
+                    string value = EditorPrefs.GetString(PlayerSettings.productGUID + BlacklistedDirectoriesKey);
                     if (string.IsNullOrEmpty(value))
                     {
                         blacklistedDirectories = new List<string>();
@@ -104,14 +104,14 @@ namespace Popcron.Builder
                 if (value == null || value.Count == 0)
                 {
                     blacklistedDirectories = new List<string>();
-                    EditorPrefs.DeleteKey(BlacklistedDirectoriesKey);
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + BlacklistedDirectoriesKey);
                 }
                 else if (blacklistedDirectories == null || !Enumerable.SequenceEqual(blacklistedDirectories, value))
                 {
                     blacklistedDirectories = new List<string>();
                     blacklistedDirectories.AddRange(value);
 
-                    EditorPrefs.SetString(BlacklistedDirectoriesKey, string.Join("\n", value));
+                    EditorPrefs.SetString(PlayerSettings.productGUID + BlacklistedDirectoriesKey, string.Join("\n", value));
                 }
             }
         }
@@ -122,7 +122,7 @@ namespace Popcron.Builder
             {
                 if (showBlacklistedDirectories == null)
                 {
-                    showBlacklistedDirectories = EditorPrefs.GetBool(ShowBlacklistedDirectoriesKey, false);
+                    showBlacklistedDirectories = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowBlacklistedDirectoriesKey, false);
                 }
 
                 return showBlacklistedDirectories.Value;
@@ -132,7 +132,7 @@ namespace Popcron.Builder
                 if (showBlacklistedDirectories != value)
                 {
                     showBlacklistedDirectories = value;
-                    EditorPrefs.SetBool(ShowBlacklistedDirectoriesKey, value);
+                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowBlacklistedDirectoriesKey, value);
                 }
             }
         }
@@ -143,7 +143,7 @@ namespace Popcron.Builder
             {
                 if (blacklistedFiles == null)
                 {
-                    string value = EditorPrefs.GetString(BlacklistedFilesKey);
+                    string value = EditorPrefs.GetString(PlayerSettings.productGUID + BlacklistedFilesKey);
                     if (string.IsNullOrEmpty(value))
                     {
                         blacklistedFiles = new List<string>();
@@ -165,14 +165,14 @@ namespace Popcron.Builder
                 if (value == null || value.Count == 0)
                 {
                     blacklistedFiles = new List<string>();
-                    EditorPrefs.DeleteKey(BlacklistedFilesKey);
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + BlacklistedFilesKey);
                 }
                 else if (blacklistedFiles == null || !Enumerable.SequenceEqual(blacklistedFiles, value))
                 {
                     blacklistedFiles = new List<string>();
                     blacklistedFiles.AddRange(value);
 
-                    EditorPrefs.SetString(BlacklistedFilesKey, string.Join("\n", value));
+                    EditorPrefs.SetString(PlayerSettings.productGUID + BlacklistedFilesKey, string.Join("\n", value));
                 }
             }
         }
@@ -183,7 +183,7 @@ namespace Popcron.Builder
             {
                 if (showBlacklistedFiles == null)
                 {
-                    showBlacklistedFiles = EditorPrefs.GetBool(ShowBlacklistedFilesKey, false);
+                    showBlacklistedFiles = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowBlacklistedFilesKey, false);
                 }
 
                 return showBlacklistedFiles.Value;
@@ -193,7 +193,7 @@ namespace Popcron.Builder
                 if (showBlacklistedFiles != value)
                 {
                     showBlacklistedFiles = value;
-                    EditorPrefs.SetBool(ShowBlacklistedFilesKey, value);
+                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowBlacklistedFilesKey, value);
                 }
             }
         }

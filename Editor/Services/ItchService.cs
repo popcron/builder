@@ -19,26 +19,20 @@ namespace Popcron.Builder
         private const string ButlerPathKey = "Popcron.Builder.ItchService.ButlerPath";
         private const string DownloadProgressKey = "Popcron.Builder.DownloadingProgress";
 
-        private static string projectName = null;
-        private static string account = null;
-        private static string butlerPath = null;
-
         public static string ItchProjectName
         {
             get
             {
-                if (projectName == null)
-                {
-                    projectName = EditorPrefs.GetString(PlayerSettings.productGUID + ItchProjectNameKey, PlayerSettings.productName);
-                }
-
-                return projectName;
+                return EditorPrefs.GetString(PlayerSettings.productGUID + ItchProjectNameKey, PlayerSettings.productName);
             }
             set
             {
-                if (projectName != value)
+                if (value == null)
                 {
-                    projectName = value;
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ItchProjectNameKey);
+                }
+                else
+                {
                     EditorPrefs.SetString(PlayerSettings.productGUID + ItchProjectNameKey, value);
                 }
             }
@@ -48,18 +42,16 @@ namespace Popcron.Builder
         {
             get
             {
-                if (account == null)
-                {
-                    account = EditorPrefs.GetString(PlayerSettings.productGUID + ItchAccountKey, PlayerSettings.companyName);
-                }
-
-                return account;
+                return EditorPrefs.GetString(PlayerSettings.productGUID + ItchAccountKey, PlayerSettings.companyName);
             }
             set
             {
-                if (account != value)
+                if (value == null)
                 {
-                    account = value;
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ItchAccountKey);
+                }
+                else
+                {
                     EditorPrefs.SetString(PlayerSettings.productGUID + ItchAccountKey, value);
                 }
             }
@@ -69,18 +61,33 @@ namespace Popcron.Builder
         {
             get
             {
-                if (butlerPath == null)
+                string path = EditorPrefs.GetString(PlayerSettings.productGUID + ButlerPathKey);
+                if (string.IsNullOrEmpty(path))
                 {
-                    butlerPath = EditorPrefs.GetString(PlayerSettings.productGUID + ButlerPathKey, Application.dataPath + "/Editor");
+                    string roamingPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\itch\\broth\\butler";
+                    string chosenVersionFile = roamingPath + "\\.chosen-version";
+                    string chosenVersion = null;
+                    if (File.Exists(chosenVersionFile))
+                    {
+                        chosenVersion = File.ReadAllLines(chosenVersionFile)[0];
+                    }
+
+                    if (chosenVersion != null)
+                    {
+                        return roamingPath + "\\versions\\" + chosenVersion;
+                    }
                 }
 
-                return butlerPath;
+                return path;
             }
             set
             {
-                if (butlerPath != value)
+                if (value == null)
                 {
-                    butlerPath = value;
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ButlerPathKey);
+                }
+                else
+                {
                     EditorPrefs.SetString(PlayerSettings.productGUID + ButlerPathKey, value);
                 }
             }
@@ -166,9 +173,14 @@ namespace Popcron.Builder
 
         public override void OnGUI()
         {
-            ItchProjectName = EditorGUILayout.TextField("Name", ItchProjectName);
             ItchAccount = EditorGUILayout.TextField("Account", ItchAccount);
+            ItchProjectName = EditorGUILayout.TextField("Name", ItchProjectName);
             ButlerDirectory = EditorGUILayout.TextField("Butler path", ButlerDirectory);
+
+            if (GUILayout.Button("Clear path"))
+            {
+                ButlerDirectory = null;
+            }
 
             if (DownloadProgress != null || !File.Exists(ButlerDirectory + "/butler.exe"))
             {
