@@ -1,18 +1,16 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
 using System.Linq;
 using System.IO;
+using System.Threading.Tasks;
 using System.Diagnostics;
-using UnityEditor.Callbacks;
 using System;
 
-//github stuff
-using Application = UnityEngine.Application;
-using Debug = UnityEngine.Debug;
-using UnityEngine.SceneManagement;
+using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEditor.Build.Reporting;
-using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
+
+using Application = UnityEngine.Application;
 
 namespace Popcron.Builder
 {
@@ -23,29 +21,19 @@ namespace Popcron.Builder
         private const string UploadingKey = "Popcron.Builder.Uploading";
         private const string BuildModeKey = "Popcron.Builder.BuildMode";
         private const string LogKey = "Popcron.Builder.Log";
+        private const string ServicesKey = "Popcron.Builder.Services";
 
-        private static bool? playOnBuild = null;
         private static List<Service> services = null;
-        private static ScriptingImplementation? scriptingImplementation = null;
 
         public static bool PlayOnBuild
         {
             get
             {
-                if (playOnBuild == null)
-                {
-                    playOnBuild = EditorPrefs.GetBool(PlayerSettings.productGUID + PlayOnBuildKey, false);
-                }
-
-                return playOnBuild.Value;
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + PlayOnBuildKey, false);
             }
             set
             {
-                if (playOnBuild != value)
-                {
-                    playOnBuild = value;
-                    EditorPrefs.SetBool(PlayerSettings.productGUID + PlayOnBuildKey, value);
-                }
+                EditorPrefs.SetBool(PlayerSettings.productGUID + PlayOnBuildKey, value);
             }
         }
 
@@ -77,20 +65,11 @@ namespace Popcron.Builder
         {
             get
             {
-                if (scriptingImplementation == null)
-                {
-                    scriptingImplementation = (ScriptingImplementation)EditorPrefs.GetInt(PlayerSettings.productGUID + BuildModeKey, 0);
-                }
-
-                return scriptingImplementation.Value;
+                return (ScriptingImplementation)EditorPrefs.GetInt(PlayerSettings.productGUID + BuildModeKey, 0);
             }
             set
             {
-                if (scriptingImplementation != value)
-                {
-                    scriptingImplementation = value;
-                    EditorPrefs.SetInt(PlayerSettings.productGUID + BuildModeKey, (int)value);
-                }
+                EditorPrefs.SetInt(PlayerSettings.productGUID + BuildModeKey, (int)value);
             }
         }
 
@@ -100,26 +79,62 @@ namespace Popcron.Builder
             {
                 if (services == null)
                 {
-                    //load all services
                     services = new List<Service>();
-                    var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                    foreach (var assembly in assemblies)
+                    string value = EditorPrefs.GetString(PlayerSettings.productGUID + ServicesKey, "");
+                    if (string.IsNullOrEmpty(value))
                     {
-                        var types = assembly.GetTypes();
-                        foreach (var type in types)
+                        services = new List<Service>();
+                    }
+                    else if (!value.Contains(":"))
+                    {
+                        string type = value.Split('+')[0];
+                        string name = value.Split('+')[1];
+
+                        Service service = Service.Get(type, name);
+                        services.Add(service);
+                    }
+                    else
+                    {
+                        string[] array = value.Split(':');
+                        for (int i = 0; i < array.Length; i++)
                         {
-                            if (type.IsAbstract) continue;
-                            if (type.IsSubclassOf(typeof(Service)))
-                            {
-                                Service instance = Activator.CreateInstance(type) as Service;
-                                services.Add(instance);
-                            }
+                            string type = array[i].Split('+')[0];
+                            string name = array[i].Split('+')[1];
+
+                            Service service = Service.Get(type, name);
+                            services.Add(service);
                         }
                     }
                 }
 
                 return services;
             }
+            set
+            {
+                if (value == null || value.Count == 0)
+                {
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ServicesKey);
+                }
+                else
+                {
+                    string[] lines = new string[value.Count];
+                    for (int i = 0; i < value.Count; i++)
+                    {
+                        string type = value[i].Type;
+                        string name = value[i].Name;
+                        lines[i] = type + "+" + name;
+                    }
+
+                    string data = string.Join(":", lines);
+                    EditorPrefs.SetString(PlayerSettings.productGUID + ServicesKey, data);
+                }
+            }
+        }
+
+        public static List<Service> GetServices()
+        {
+            services = null;
+            return Services;
         }
 
         internal static List<(string text, MessageType type)> Log
@@ -427,11 +442,12 @@ namespace Popcron.Builder
             //run through list of services
             //and upload to the ones that are allowed
             var tasks = new List<Task>();
+            var services = Services;
             for (int i = 0; i < services.Count; i++)
             {
                 if (services[i].CanUploadTo)
                 {
-                    Print("Started uploading to " + services[i].Name, MessageType.Info);
+                    Print("Started uploading to " + services[i].Type, MessageType.Info);
                     try
                     {
                         var task = services[i].Upload(path, version, platform);
@@ -439,7 +455,7 @@ namespace Popcron.Builder
                     }
                     catch (Exception exception)
                     {
-                        Print(services[i].Name + ": " + exception.Message, MessageType.Error);
+                        Print(services[i].Type + ": " + exception.Message, MessageType.Error);
                     }
                 }
             }

@@ -19,49 +19,49 @@ namespace Popcron.Builder
         private const string ButlerPathKey = "Popcron.Builder.ItchService.ButlerPath";
         private const string DownloadProgressKey = "Popcron.Builder.DownloadingProgress";
 
-        public static string ItchProjectName
+        public string ItchProjectName
         {
             get
             {
-                return EditorPrefs.GetString(PlayerSettings.productGUID + ItchProjectNameKey, PlayerSettings.productName);
+                return EditorPrefs.GetString(PlayerSettings.productGUID + ItchProjectNameKey + Index, PlayerSettings.productName);
             }
             set
             {
                 if (value == null)
                 {
-                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ItchProjectNameKey);
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ItchProjectNameKey + Index);
                 }
                 else
                 {
-                    EditorPrefs.SetString(PlayerSettings.productGUID + ItchProjectNameKey, value);
+                    EditorPrefs.SetString(PlayerSettings.productGUID + ItchProjectNameKey + Index, value);
                 }
             }
         }
 
-        public static string ItchAccount
+        public string ItchAccount
         {
             get
             {
-                return EditorPrefs.GetString(PlayerSettings.productGUID + ItchAccountKey, PlayerSettings.companyName);
+                return EditorPrefs.GetString(PlayerSettings.productGUID + ItchAccountKey + Index, PlayerSettings.companyName);
             }
             set
             {
                 if (value == null)
                 {
-                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ItchAccountKey);
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ItchAccountKey + Index);
                 }
                 else
                 {
-                    EditorPrefs.SetString(PlayerSettings.productGUID + ItchAccountKey, value);
+                    EditorPrefs.SetString(PlayerSettings.productGUID + ItchAccountKey + Index, value);
                 }
             }
         }
 
-        public static string ButlerDirectory
+        public string ButlerDirectory
         {
             get
             {
-                string path = EditorPrefs.GetString(PlayerSettings.productGUID + ButlerPathKey);
+                string path = EditorPrefs.GetString(PlayerSettings.productGUID + ButlerPathKey + Index);
                 if (string.IsNullOrEmpty(path))
                 {
                     string roamingPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\itch\\broth\\butler";
@@ -84,46 +84,46 @@ namespace Popcron.Builder
             {
                 if (value == null)
                 {
-                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ButlerPathKey);
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + ButlerPathKey + Index);
                 }
                 else
                 {
-                    EditorPrefs.SetString(PlayerSettings.productGUID + ButlerPathKey, value);
+                    EditorPrefs.SetString(PlayerSettings.productGUID + ButlerPathKey + Index, value);
                 }
             }
         }
 
-        private static float? DownloadProgress
+        private float? DownloadProgress
         {
             get
             {
-                float value = EditorPrefs.GetFloat(PlayerSettings.productGUID + DownloadProgressKey, -1);
+                float value = EditorPrefs.GetFloat(PlayerSettings.productGUID + DownloadProgressKey + Index, -1);
                 return value >= 0 ? value : (float?)null;
             }
             set
             {
                 if (value != null && value >= 0)
                 {
-                    EditorPrefs.SetFloat(PlayerSettings.productGUID + DownloadProgressKey, value.Value);
+                    EditorPrefs.SetFloat(PlayerSettings.productGUID + DownloadProgressKey + Index, value.Value);
                 }
                 else
                 {
-                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + DownloadProgressKey);
+                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + DownloadProgressKey + Index);
                 }
             }
         }
 
-        public override string Name => "Itch";
+        public override string Type => "Itch";
 
         public override bool CanUploadTo
         {
             get
             {
-                return EditorPrefs.GetBool(PlayerSettings.productGUID + Name + "_" + ItchAccount + "_" + ItchProjectName, false);
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + Type + "_" + ItchAccount + "_" + ItchProjectName + Index, false);
             }
             set
             {
-                EditorPrefs.SetBool(PlayerSettings.productGUID + Name + "_" + ItchAccount + "_" + ItchProjectName, value);
+                EditorPrefs.SetBool(PlayerSettings.productGUID + Type + "_" + ItchAccount + "_" + ItchProjectName + Index, value);
             }
         }
 
@@ -176,12 +176,7 @@ namespace Popcron.Builder
             ItchAccount = EditorGUILayout.TextField("Account", ItchAccount);
             ItchProjectName = EditorGUILayout.TextField("Name", ItchProjectName);
             ButlerDirectory = EditorGUILayout.TextField("Butler path", ButlerDirectory);
-
-            if (GUILayout.Button("Clear path"))
-            {
-                ButlerDirectory = null;
-            }
-
+            
             if (DownloadProgress != null || !File.Exists(ButlerDirectory + "/butler.exe"))
             {
                 if (DownloadProgress != null)

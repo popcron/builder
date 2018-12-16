@@ -9,13 +9,15 @@ namespace Popcron.Builder
 {
     public class SettingsWindow : EditorWindow
     {
+        private const string ShowKey = "Popcron.Builder.ShowService";
+
         [MenuItem("Popcron/Builder/Settings")]
         public static void Initialize()
         {
             SettingsWindow window = GetWindow<SettingsWindow>(false, "Settings");
         }
 
-        private static List<T> Clone<T>(List<T> listToClone) where T : ICloneable
+        private static List<T> Clone<T>(List<T> listToClone)
         {
             if (listToClone == null || listToClone.Count == 0) return new List<T>();
 
@@ -28,7 +30,7 @@ namespace Popcron.Builder
         }
 
         //taken from https://stackoverflow.com/questions/12231569/is-there-in-c-sharp-a-method-for-listt-like-resize-in-c-for-vectort
-        private static void Resize<T>(List<T> list, int size, T c = default(T))
+        private static void Resize<T>(List<T> list, int size, T c = default)
         {
             int cur = list.Count;
             if (size < cur) list.RemoveRange(size, cur - size);
@@ -124,16 +126,93 @@ namespace Popcron.Builder
             EditorGUILayout.LabelField("Services", EditorStyles.boldLabel);
 
             //draw services settings
-            foreach (var service in Builder.Services)
+            List<Service> services = Clone(Builder.Services);
+            bool changed = false;
+
+            EditorGUI.indentLevel++;
+
+            //resize field
+            int size = EditorGUILayout.IntField("Size", services.Count);
+            if (size < 0) size = 0;
+            if (size > 8) size = 8;
+            if (size != services.Count)
             {
-                service.Show = EditorGUILayout.Foldout(service.Show, service.Name);
-                if (service.Show)
+                int diff = Mathf.Abs(services.Count - size);
+                if (size > services.Count)
                 {
-                    EditorGUI.indentLevel++;
-                    service.OnGUI();
-                    EditorGUI.indentLevel--;
+                    //add more
+                    for (int i = 0; i < diff; i++)
+                    {
+                        Service service = Service.Get("Empty", "Service");
+                        services.Add(service);
+                    }
+
+                    changed = true;
+                }
+                else
+                {
+                    //remove extra
+                    for (int i = 0; i < diff; i++)
+                    {
+                        services.RemoveAt(services.Count - 1);
+                    }
+
+                    changed = true;
                 }
             }
+
+            //services array
+            for (int i = 0; i < services.Count; i++)
+            {
+                services[i].Index = i;
+                bool show = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowKey + "." + i, false);
+                show = EditorGUILayout.Foldout(show, services[i].Name);
+                if (show)
+                {
+                    EditorGUI.indentLevel++;
+
+                    //draw name field
+                    string name = EditorGUILayout.TextField("Name", services[i].Name);
+                    if (name != services[i].Name)
+                    {
+                        services[i].Name = name;
+                        changed = true;
+                    }
+
+                    //draw type field
+                    int selectedIndex = 0;
+                    var uniqueServices = Service.Services;
+                    string[] displayOptions = new string[uniqueServices.Count];
+                    for (int s = 0; s < uniqueServices.Count; s++)
+                    {
+                        if (uniqueServices[s].typeName == services[i].Type)
+                        {
+                            selectedIndex = s;
+                        }
+                        displayOptions[s] = uniqueServices[s].typeName;
+                    }
+                    int newIndex = EditorGUILayout.Popup("Type", selectedIndex, displayOptions);
+                    if (newIndex != selectedIndex)
+                    {
+                        services[i] = Service.Get(displayOptions[newIndex], name);
+                        changed = true;
+                    }
+
+                    //draw service gui
+                    services[i].OnGUI();
+
+                    EditorGUI.indentLevel--;
+                }
+                EditorPrefs.SetBool(PlayerSettings.productGUID + ShowKey + "." + i, show);
+            }
+
+            if (changed)
+            {
+                Builder.Services = services;
+                Builder.GetServices();
+            }
+
+            EditorGUI.indentLevel--;
         }
     }
 }

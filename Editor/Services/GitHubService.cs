@@ -56,86 +56,55 @@ namespace Popcron.Builder
         private const string ShowTokenKey = "Popcron.Builder.GitHubService.ShowToken";
         private const string UserAgent = "Popcron.Builder.GitHubService";
 
-        private static string owner = null;
-        private static string repository = null;
-        private static bool? showToken = null;
-
-        public static string Owner
+        public string Owner
         {
             get
             {
-                if (owner == null)
-                {
-                    owner = EditorPrefs.GetString(PlayerSettings.productGUID + OwnerKey, PlayerSettings.companyName);
-                }
-
-                return owner;
+                return EditorPrefs.GetString(PlayerSettings.productGUID + OwnerKey + Index, PlayerSettings.companyName);
             }
             set
             {
-                if (owner != value)
-                {
-                    owner = value;
-                    EditorPrefs.SetString(PlayerSettings.productGUID + OwnerKey, value);
-                }
+                EditorPrefs.SetString(PlayerSettings.productGUID + OwnerKey + Index, value);
             }
         }
 
-        public static string Repository
+        public string Repository
         {
             get
             {
-                if (repository == null)
-                {
-                    repository = EditorPrefs.GetString(PlayerSettings.productGUID + RepositoryKey, PlayerSettings.productName);
-                }
-
-                return repository;
+                return EditorPrefs.GetString(PlayerSettings.productGUID + RepositoryKey + Index, PlayerSettings.productName);
             }
             set
             {
-                if (repository != value)
-                {
-                    repository = value;
-                    EditorPrefs.SetString(PlayerSettings.productGUID + RepositoryKey, value);
-                }
+                EditorPrefs.SetString(PlayerSettings.productGUID + RepositoryKey + Index, value);
             }
         }
 
-        public static string Token
+        public string Token
         {
             get
             {
-                return EditorPrefs.GetString(PlayerSettings.productGUID + TokenKey);
+                return EditorPrefs.GetString(PlayerSettings.productGUID + TokenKey + Index);
             }
             set
             {
-                EditorPrefs.SetString(PlayerSettings.productGUID + TokenKey, value);
+                EditorPrefs.SetString(PlayerSettings.productGUID + TokenKey + Index, value);
             }
         }
 
-        public static bool ShowToken
+        public bool ShowToken
         {
             get
             {
-                if (showToken == null)
-                {
-                    showToken = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowTokenKey);
-                }
-
-                return showToken.Value;
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + ShowTokenKey + Index);
             }
             set
             {
-                if (showToken != value)
-                {
-                    showToken = value;
-                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowTokenKey, value);
-                }
+                EditorPrefs.SetBool(PlayerSettings.productGUID + ShowTokenKey + Index, value);
             }
         }
 
-        public override string Name => "GitHub";
+        public override string Type => "GitHub";
 
         public override string URL => "https://github.com/" + Owner + "/" + Repository;
 
@@ -143,11 +112,11 @@ namespace Popcron.Builder
         {
             get
             {
-                return EditorPrefs.GetBool(Name + "_" + Owner + "_" + Repository, false);
+                return EditorPrefs.GetBool(Type + "_" + Owner + "_" + Repository + Index, false);
             }
             set
             {
-                EditorPrefs.SetBool(Name + "_" + Owner + "_" + Repository, value);
+                EditorPrefs.SetBool(Type + "_" + Owner + "_" + Repository + Index, value);
             }
         }
 
