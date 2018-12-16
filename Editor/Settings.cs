@@ -17,13 +17,9 @@ namespace Popcron.Builder
         private const string ShowBlacklistedDirectoriesKey = "Popcron.Builder.Settings.ShowBlacklistedDirectories";
         private const string BlacklistedFilesKey = "Popcron.Builder.Settings.BlacklistedFiles";
         private const string ShowBlacklistedFilesKey = "Popcron.Builder.Settings.ShowBlacklistedFiles";
-
-        private static string gameName = null;
-        private static string executableName = null;
+        
         private static List<string> blacklistedDirectories = null;
-        private static bool? showBlacklistedDirectories = null;
         private static List<string> blacklistedFiles = null;
-        private static bool? showBlacklistedFiles = null;
 
         /// <summary>
         /// Name of the game
@@ -32,20 +28,11 @@ namespace Popcron.Builder
         {
             get
             {
-                if (gameName == null)
-                {
-                    gameName = EditorPrefs.GetString(PlayerSettings.productGUID + GameNameKey, PlayerSettings.productName);
-                }
-
-                return gameName;
+                return EditorPrefs.GetString(PlayerSettings.productGUID + GameNameKey, PlayerSettings.productName);
             }
             set
             {
-                if (gameName != value)
-                {
-                    gameName = value;
-                    EditorPrefs.SetString(PlayerSettings.productGUID + GameNameKey, value);
-                }
+                EditorPrefs.SetString(PlayerSettings.productGUID + GameNameKey, value);
             }
         }
 
@@ -56,20 +43,11 @@ namespace Popcron.Builder
         {
             get
             {
-                if (executableName == null)
-                {
-                    executableName = EditorPrefs.GetString(PlayerSettings.productGUID + ExecutableNameKey, PlayerSettings.productName);
-                }
-
-                return executableName;
+                return EditorPrefs.GetString(PlayerSettings.productGUID + ExecutableNameKey, PlayerSettings.productName);
             }
             set
             {
-                if (executableName != value)
-                {
-                    executableName = value;
-                    EditorPrefs.SetString(PlayerSettings.productGUID + ExecutableNameKey, value);
-                }
+                EditorPrefs.SetString(PlayerSettings.productGUID + ExecutableNameKey, value);
             }
         }
 
@@ -120,20 +98,11 @@ namespace Popcron.Builder
         {
             get
             {
-                if (showBlacklistedDirectories == null)
-                {
-                    showBlacklistedDirectories = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowBlacklistedDirectoriesKey, false);
-                }
-
-                return showBlacklistedDirectories.Value;
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + ShowBlacklistedDirectoriesKey, false);
             }
             set
             {
-                if (showBlacklistedDirectories != value)
-                {
-                    showBlacklistedDirectories = value;
-                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowBlacklistedDirectoriesKey, value);
-                }
+                EditorPrefs.SetBool(PlayerSettings.productGUID + ShowBlacklistedDirectoriesKey, value);
             }
         }
 
@@ -181,20 +150,11 @@ namespace Popcron.Builder
         {
             get
             {
-                if (showBlacklistedFiles == null)
-                {
-                    showBlacklistedFiles = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowBlacklistedFilesKey, false);
-                }
-
-                return showBlacklistedFiles.Value;
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + ShowBlacklistedFilesKey, false);
             }
             set
             {
-                if (showBlacklistedFiles != value)
-                {
-                    showBlacklistedFiles = value;
-                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowBlacklistedFilesKey, value);
-                }
+                EditorPrefs.SetBool(PlayerSettings.productGUID + ShowBlacklistedFilesKey, value);
             }
         }
 

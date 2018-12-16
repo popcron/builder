@@ -181,6 +181,7 @@ namespace Popcron.Builder
 
             if (!releaseAlreadyExists)
             {
+                Builder.Print(Name + ": Creating new release...", MessageType.Info);
                 var createRequest = new CreateRequest
                 {
                     name = releaseName,
@@ -212,6 +213,7 @@ namespace Popcron.Builder
                             if (int.TryParse(scrapedId.Substring(0, scrapedId.IndexOf(",")), out int result))
                             {
                                 id = result;
+                                Builder.Print(Name + ": Created release with ID " + id + ".", MessageType.Info);
                             }
                         }
                     }
@@ -219,6 +221,8 @@ namespace Popcron.Builder
 
                 //upload asset to release
                 string archiveName = Path.GetFileName(path);
+                Builder.Print(Name + ": Uploading " + archiveName + "", MessageType.Info);
+
                 byte[] archiveData = File.ReadAllBytes(path);
                 string url = "https://uploads.github.com/repos/" + Owner + "/" + Repository + "/releases/" + id + "/assets?name=" + archiveName;
 

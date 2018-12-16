@@ -39,6 +39,7 @@ namespace Popcron.Builder
 
         private void OnGUI()
         {
+            Repaint();
             Window.DrawHeader("", "");
             DrawVersionInformation();
 

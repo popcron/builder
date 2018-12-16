@@ -177,7 +177,7 @@ namespace Popcron.Builder
 
             if (list.Count > 10)
             {
-                list.RemoveAt(list.Count - 1);
+                list.RemoveAt(0);
             }
 
             Log = list;
@@ -197,13 +197,7 @@ namespace Popcron.Builder
             Uploading = false;
             Building = false;
         }
-
-        [MenuItem("Popcron/Builder/Build")]
-        public static void Build()
-        {
-            Build("win");
-        }
-
+        
         [PostProcessBuild(1)]
         public static void OnPostprocessBuild(BuildTarget target, string path)
         {
