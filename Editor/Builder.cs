@@ -137,67 +137,64 @@ namespace Popcron.Builder
             return Services;
         }
 
+        internal static void ClearLog()
+        {
+            EditorPrefs.SetString(PlayerSettings.productGUID + LogKey, "");
+        }
+
         internal static List<(string text, MessageType type)> Log
         {
             get
             {
-                const char Delimeter = (char)0;
-                string value = EditorPrefs.GetString(LogKey);
+                const char Delimeter = (char)1;
+                string value = EditorPrefs.GetString(PlayerSettings.productGUID + LogKey, "");
                 string[] array = value.Split('\n');
                 List<(string text, MessageType type)> list = new List<(string text, MessageType type)>();
                 for (int i = 0; i < array.Length; i++)
                 {
                     if (array[i].Contains(Delimeter))
                     {
-                        string text = array[i].Split(Delimeter)[0];
-                        MessageType type = (MessageType)int.Parse(array[i].Split(Delimeter)[1]);
-                        list.Add((text, type));
+                        string elementLine = array[i].Split(Delimeter)[0];
+                        MessageType elementType = (MessageType)int.Parse(array[i].Split(Delimeter)[1]);
+                        list.Add((elementLine, elementType));
                     }
                 }
-                return list;
-            }
-            private set
-            {
-                const char Delimeter = (char)0;
-                string[] array = new string[value.Count];
-                for (int i = 0; i < value.Count; i++)
-                {
-                    array[i] = value[i].text + Delimeter + ((int)value[i].type);
-                }
 
-                string data = string.Join("\n", array);
-                EditorPrefs.SetString(LogKey, data);
+                return list;
             }
         }
 
         internal static void Print(string text, MessageType type)
         {
+            const char Delimeter = (char)1;
             var list = Log;
-            list.Insert(0, (text, type));
-
+            list.Add((text, type));
             if (list.Count > 10)
             {
-                list.RemoveAt(0);
+                int extra = list.Count - 10;
+                for (int i = 0; i < extra; i++)
+                {
+                    list.RemoveAt(0);
+                }
             }
 
-            Log = list;
-        }
+            string[] data = new string[list.Count];
+            for (int i = 0; i < list.Count; i++)
+            {
+                data[i] = list[i].text + Delimeter + ((int)list[i].type);
+            }
 
-        internal static void Clear()
-        {
-            var list = Log;
-            list.Clear();
-            Log = list;
+            string pref = string.Join("\n", data);
+            EditorPrefs.SetString(PlayerSettings.productGUID + LogKey, pref);
         }
 
         internal static void Reset()
         {
-            Clear();
             PlayOnBuild = false;
             Uploading = false;
             Building = false;
         }
-        
+
         [PostProcessBuild(1)]
         public static void OnPostprocessBuild(BuildTarget target, string path)
         {
@@ -442,15 +439,8 @@ namespace Popcron.Builder
                 if (services[i].CanUploadTo)
                 {
                     Print("Started uploading to " + services[i].Name, MessageType.Info);
-                    try
-                    {
-                        var task = services[i].Upload(path, version, platform);
-                        tasks.Add(task);
-                    }
-                    catch (Exception exception)
-                    {
-                        Print(services[i].Name + ": " + exception.Message, MessageType.Error);
-                    }
+                    var task = services[i].Upload(path, version, platform);
+                    tasks.Add(task);
                 }
             }
 

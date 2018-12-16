@@ -205,18 +205,33 @@ namespace Popcron.Builder
                             string data = await reader.ReadToEndAsync();
                             if (data.Contains("Validation Failed") && data.Contains("already_exists") && data.Contains("tag_name"))
                             {
-                                Builder.Print(Name + ": Release with tag " + tag + " already exists", MessageType.Error);
+                                Builder.Print(Name + ": Release with tag " + tag + " already exists.", MessageType.Error);
                                 return;
                             }
 
-                            string scrapedId = data.Substring(data.IndexOf("id") + 4);
-                            if (int.TryParse(scrapedId.Substring(0, scrapedId.IndexOf(",")), out int result))
+                            int start = data.IndexOf(",\"id\":") + 6;
+                            int end = data.IndexOf(",\"node_id\":\"");
+                            int length = end - start;
+                            string scrapedId = data.Substring(start, length);
+
+                            if (int.TryParse(scrapedId, out int result))
                             {
                                 id = result;
                                 Builder.Print(Name + ": Created release with ID " + id + ".", MessageType.Info);
                             }
+                            else
+                            {
+                                Builder.Print(Name + ": Couldn't parse " + scrapedId + " as release ID.", MessageType.Error);
+                                return;
+                            }
                         }
                     }
+                }
+
+                if (id == 0)
+                {
+                    Builder.Print(Name + ": Couldnt create release.", MessageType.Error);
+                    return;
                 }
 
                 //upload asset to release

@@ -143,7 +143,7 @@ namespace Popcron.Builder
             float width = Mathf.Max(60f, Screen.width / 3f);
             if (GUI.Button(new Rect(Screen.width - width, rect.yMax, width, 17), "Clear", EditorStyles.toolbarButton))
             {
-                Builder.Clear();
+                Builder.ClearLog();
             }
 
             GUILayout.Space(20);
