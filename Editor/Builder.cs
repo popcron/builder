@@ -447,7 +447,7 @@ namespace Popcron.Builder
             {
                 if (services[i].CanUploadTo)
                 {
-                    Print("Started uploading to " + services[i].Type, MessageType.Info);
+                    Print("Started uploading to " + services[i].Name, MessageType.Info);
                     try
                     {
                         var task = services[i].Upload(path, version, platform);
@@ -455,7 +455,7 @@ namespace Popcron.Builder
                     }
                     catch (Exception exception)
                     {
-                        Print(services[i].Type + ": " + exception.Message, MessageType.Error);
+                        Print(services[i].Name + ": " + exception.Message, MessageType.Error);
                     }
                 }
             }

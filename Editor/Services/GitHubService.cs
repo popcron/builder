@@ -50,11 +50,24 @@ namespace Popcron.Builder
             public string published_at = "";
         }
 
+        private const string PrefixKey = "Popcron.Builder.GitHubService.Prefix";
         private const string OwnerKey = "Popcron.Builder.GitHubService.Owner";
         private const string RepositoryKey = "Popcron.Builder.GitHubService.Repository";
         private const string TokenKey = "Popcron.Builder.GitHubService.Token";
         private const string ShowTokenKey = "Popcron.Builder.GitHubService.ShowToken";
         private const string UserAgent = "Popcron.Builder.GitHubService";
+
+        public string Prefix
+        {
+            get
+            {
+                return EditorPrefs.GetString(PlayerSettings.productGUID + PrefixKey + Index, "v");
+            }
+            set
+            {
+                EditorPrefs.SetString(PlayerSettings.productGUID + PrefixKey + Index, value);
+            }
+        }
 
         public string Owner
         {
@@ -124,10 +137,13 @@ namespace Popcron.Builder
         {
             if (string.IsNullOrEmpty(Token))
             {
-                throw new Exception("GitHub service doesn't have an access token.");
+                Builder.Print(Name + ": No access token.", MessageType.Error);
+                return;
             }
 
-            string releaseName = "version " + version;
+            string releaseName = Settings.GameName + " " + version;
+            string tag = Prefix + version;
+
             string auth = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(Owner + ":" + Token));
             bool releaseAlreadyExists = false;
 
@@ -142,7 +158,14 @@ namespace Popcron.Builder
                     using (var reader = new StreamReader(await response.Content.ReadAsStreamAsync()))
                     {
                         string data = await reader.ReadToEndAsync();
+                        if (data.Contains("\"message\":\"Not Found\""))
+                        {
+                            Builder.Print(Name + ":  " + Owner + "/" + Repository + " repository not found.", MessageType.Error);
+                            return;
+                        }
+
                         data = "{\"releases\":" + data + "}";
+
                         var releases = JsonUtility.FromJson<ReleasesResponse>(data);
                         foreach (var release in releases.releases)
                         {
@@ -161,7 +184,7 @@ namespace Popcron.Builder
                 var createRequest = new CreateRequest
                 {
                     name = releaseName,
-                    tag_name = version
+                    tag_name = tag
                 };
 
                 string postRequest = JsonUtility.ToJson(createRequest);
@@ -181,12 +204,15 @@ namespace Popcron.Builder
                             string data = await reader.ReadToEndAsync();
                             if (data.Contains("Validation Failed") && data.Contains("already_exists") && data.Contains("tag_name"))
                             {
-                                Builder.Print("GitHub: Release with tag " + createRequest.tag_name + " already exists", MessageType.Error);
+                                Builder.Print(Name + ": Release with tag " + tag + " already exists", MessageType.Error);
                                 return;
                             }
 
                             string scrapedId = data.Substring(data.IndexOf("id") + 4);
-                            id = int.Parse(scrapedId.Substring(0, scrapedId.IndexOf(",")));
+                            if (int.TryParse(scrapedId.Substring(0, scrapedId.IndexOf(",")), out int result))
+                            {
+                                id = result;
+                            }
                         }
                     }
                 }
@@ -210,11 +236,11 @@ namespace Popcron.Builder
                 }
 
                 await uploadRequest.GetResponseAsync();
-                Builder.Print("GitHub: Finished", MessageType.Info);
+                Builder.Print(Name + ": Finished.", MessageType.Info);
             }
             else
             {
-                Builder.Print("GitHub: Release with version " + version + " already exists", MessageType.Error);
+                Builder.Print(Name + ": Release with name " + releaseName + " already exists.", MessageType.Error);
             }
         }
 
@@ -222,6 +248,7 @@ namespace Popcron.Builder
         {
             Owner = EditorGUILayout.TextField("Owner", Owner);
             Repository = EditorGUILayout.TextField("Repository", Repository);
+            Prefix = EditorGUILayout.TextField("Prefix", Prefix);
 
             ShowToken = EditorGUILayout.Foldout(ShowToken, "Token");
             if (ShowToken)
@@ -230,6 +257,11 @@ namespace Popcron.Builder
                 Token = EditorGUILayout.TextField(Token);
                 EditorGUI.indentLevel--;
             }
+
+            string release = "\n    Name: " + Settings.GameName + " " + Settings.CurrentVersion;
+            release += "\n    Tag: " + Prefix + Settings.CurrentVersion;
+
+            EditorGUILayout.HelpBox("Release info:" + release, MessageType.Info);
         }
     }
 }

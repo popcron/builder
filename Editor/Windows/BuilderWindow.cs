@@ -52,11 +52,12 @@ namespace Popcron.Builder
 
             //loop through the services, and toggle each setting
             int uploadServices = 0;
-            var services = Builder.Services;
-            foreach (Service service in services)
+            List<Service> services = Builder.Services;
+            for (int i = 0; i < services.Count; i++)
             {
-                service.CanUploadTo = EditorGUILayout.Toggle("Upload to " + service.Name, service.CanUploadTo);
-                if (service.CanUploadTo)
+                services[i].Index = i;
+                services[i].CanUploadTo = EditorGUILayout.Toggle("Upload to " + services[i].Name, services[i].CanUploadTo);
+                if (services[i].CanUploadTo)
                 {
                     uploadServices++;
                 }

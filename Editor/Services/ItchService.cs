@@ -154,7 +154,7 @@ namespace Popcron.Builder
             if (!File.Exists(butlerPath))
             {
                 //The bulter.exe doesnt exist, create it and redo it.
-                Builder.Print("Itch: butler.exe wasnt found. Check the settings and make sure that the executable eixsts", MessageType.Error);
+                Builder.Print(Name + ": butler.exe wasnt found. Check the settings and make sure that the executable eixsts.", MessageType.Error);
                 return;
             }
 
@@ -168,7 +168,7 @@ namespace Popcron.Builder
                 await Task.Delay(10);
             }
 
-            Builder.Print("Itch: Finished", MessageType.Info);
+            Builder.Print(Name + ": Finished.", MessageType.Info);
         }
 
         public override void OnGUI()
