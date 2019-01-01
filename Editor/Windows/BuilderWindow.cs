@@ -45,6 +45,11 @@ namespace Popcron.Builder
 
             if (Builder.Building)
             {
+                if (GUILayout.Button("Cancel"))
+                {
+                    Builder.Building = false;
+                }
+
                 EditorGUILayout.LabelField("Building...", EditorStyles.boldLabel);
                 return;
             }
@@ -66,6 +71,9 @@ namespace Popcron.Builder
 
             //mode enum
             Builder.ScriptingImplementation = (ScriptingImplementation)EditorGUILayout.EnumPopup("Mode", Builder.ScriptingImplementation);
+
+            //development stuff
+            Builder.ProfilerDebug = EditorGUILayout.Toggle("Autoconnect Profiler", Builder.ProfilerDebug);
 
             Rect lastRect = GUILayoutUtility.GetLastRect();
 

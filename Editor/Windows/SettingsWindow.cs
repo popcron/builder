@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using System.IO;
 
 namespace Popcron.Builder
 {
@@ -115,8 +116,21 @@ namespace Popcron.Builder
             //draw generic info
             Settings.GameName = EditorGUILayout.TextField("Game name", Settings.GameName);
             Settings.ExecutableName = EditorGUILayout.TextField("Executable name", Settings.ExecutableName);
+            Settings.CurrentBuildDirectory = EditorGUILayout.TextField("Current build directory", Settings.CurrentBuildDirectory);
+            Settings.BuildsDirectory = EditorGUILayout.TextField("Builds directory", Settings.BuildsDirectory);
 
-            EditorGUILayout.HelpBox("Game will be built as " + Settings.ExecutableName + ".exe", MessageType.Info);
+            //show preview
+            string buildPath = Path.Combine(Settings.CurrentBuildDirectory, Builder.CurrentPlatform);
+            string archivePath = Path.Combine(Settings.BuildsDirectory, Builder.CurrentPlatform);
+            string[] lines = new string[]
+            {
+                "",
+                "Game will be built as " + Settings.ExecutableName + ".exe",
+                "To the \"" + buildPath + "\" folder",
+                "And also saved to \"" + archivePath + "\" folder as a .zip",
+                ""
+            };
+            EditorGUILayout.HelpBox(string.Join("\n", lines), MessageType.Info);
 
             EditorGUILayout.LabelField("Blacklists", EditorStyles.boldLabel);
 

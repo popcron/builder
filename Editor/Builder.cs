@@ -10,20 +10,28 @@ using UnityEditor.Callbacks;
 using UnityEditor.Build.Reporting;
 using UnityEngine.SceneManagement;
 
-using Application = UnityEngine.Application;
-
 namespace Popcron.Builder
 {
     public class Builder : EditorWindow
     {
         private const string PlayOnBuildKey = "Popcron.Builder.PlayOnBuild";
         private const string BuildingKey = "Popcron.Builder.Building";
+        private const string ProfilerDebugKey = "Popcron.Builder.ProfilerDebug";
         private const string UploadingKey = "Popcron.Builder.Uploading";
         private const string BuildModeKey = "Popcron.Builder.BuildMode";
         private const string LogKey = "Popcron.Builder.Log";
         private const string ServicesKey = "Popcron.Builder.Services";
 
         private static List<Service> services = null;
+
+        public static string CurrentPlatform
+        {
+            get
+            {
+                string platform = EditorPrefs.GetString(Settings.GameName + "_buildPlatform", "win");
+                return platform;
+            }
+        }
 
         public static bool PlayOnBuild
         {
@@ -70,6 +78,18 @@ namespace Popcron.Builder
             set
             {
                 EditorPrefs.SetInt(PlayerSettings.productGUID + BuildModeKey, (int)value);
+            }
+        }
+
+        public static bool ProfilerDebug
+        {
+            get
+            {
+                return EditorPrefs.GetBool(PlayerSettings.productGUID + ProfilerDebugKey, false);
+            }
+            set
+            {
+                EditorPrefs.SetBool(PlayerSettings.productGUID + ProfilerDebugKey, value);
             }
         }
 
@@ -201,7 +221,7 @@ namespace Popcron.Builder
             string platform = TargetToPlatform(target);
             string version = GetBuiltVersion(platform);
 
-            string root = Directory.GetParent(Application.dataPath).FullName;
+            string root = Settings.BuildsDirectory;
             if (path.StartsWith("/"))
             {
                 path = path.Substring(1);
@@ -222,19 +242,18 @@ namespace Popcron.Builder
             }
 
             string exportZip = path + ".zip";
-            string archivedZip = root + "/Builds/" + platform + "/" + version + " (" + date + ").zip";
+            string archivedZip = root + "/" + platform + "/" + version + " (" + date + ").zip";
 
+            //delete the old zip
             if (File.Exists(exportZip))
             {
                 File.Delete(exportZip);
             }
-            if (!Directory.Exists(root + "/Builds"))
+
+            //ensure the folder exists
+            if (!Directory.Exists(root + "/" + platform))
             {
-                Directory.CreateDirectory(root + "/Builds");
-            }
-            if (!Directory.Exists(root + "/Builds/" + platform))
-            {
-                Directory.CreateDirectory(root + "/Builds/" + platform);
+                Directory.CreateDirectory(root);
             }
 
             Print("Compressing " + path + " to " + exportZip, MessageType.Info);
@@ -277,7 +296,7 @@ namespace Popcron.Builder
 
         public static string GetBuildPath(string platform)
         {
-            string root = Directory.GetParent(Application.dataPath) + "/Game";
+            string root = Settings.CurrentBuildDirectory;
             if (platform == "win") return root + "/" + platform + "/" + Settings.ExecutableName + ".exe";
             if (platform == "mac") return root + "/" + platform + "/" + Settings.ExecutableName + ".app";
             if (platform == "linux") return root + "/" + platform + "/" + Settings.ExecutableName + ".x86";
@@ -293,7 +312,7 @@ namespace Popcron.Builder
 
         public static string GetPlayPath(string platform)
         {
-            string root = Directory.GetParent(Application.dataPath) + "/Game/" + platform + "/";
+            string root = Settings.CurrentBuildDirectory + "/" + platform + "/";
             if (platform == "win") return root + Settings.ExecutableName + ".exe";
             if (platform == "mac") return root + Settings.ExecutableName + ".app";
             if (platform == "linux") return root + Settings.ExecutableName + ".x86";
@@ -319,13 +338,15 @@ namespace Popcron.Builder
             Scene activeScene = SceneManager.GetActiveScene();
             string[] levels = new string[] { activeScene.path };
 
-            if (!Directory.Exists(Directory.GetParent(Application.dataPath) + "/Game"))
+            //ensure that the directory exists
+            if (!Directory.Exists(Settings.CurrentBuildDirectory))
             {
-                Directory.CreateDirectory(Directory.GetParent(Application.dataPath) + "/Game");
+                Directory.CreateDirectory(Settings.CurrentBuildDirectory);
             }
 
-            //rebuild folder
-            string folder = Directory.GetParent(Application.dataPath) + "/Game/" + platform;
+            //rebuild folder by deleting
+            //and then by creating a new one
+            string folder = Settings.CurrentBuildDirectory + "/" + platform;
             if (Directory.Exists(folder))
             {
                 Directory.Delete(folder, true);
@@ -339,6 +360,11 @@ namespace Popcron.Builder
             OnPreBuild();
 
             BuildOptions options = BuildOptions.CompressWithLz4HC | BuildOptions.AcceptExternalModificationsToPlayer;
+            if (ProfilerDebug)
+            {
+                options |= BuildOptions.ConnectWithProfiler;
+            }
+
             BuildReport report = null;
             if (ScriptingImplementation == ScriptingImplementation.IL2CPP)
             {
@@ -360,7 +386,7 @@ namespace Popcron.Builder
             }
 
             //success
-            if (report.summary.result == BuildResult.Failed)
+            if (report.summary.result != BuildResult.Succeeded)
             {
                 Building = false;
             }
@@ -432,8 +458,8 @@ namespace Popcron.Builder
 
             //run through list of services
             //and upload to the ones that are allowed
-            var tasks = new List<Task>();
-            var services = Services;
+            List<Task> tasks = new List<Task>();
+            List<Service> services = Services;
             for (int i = 0; i < services.Count; i++)
             {
                 if (services[i].CanUploadTo)

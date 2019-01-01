@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -17,9 +18,47 @@ namespace Popcron.Builder
         private const string ShowBlacklistedDirectoriesKey = "Popcron.Builder.Settings.ShowBlacklistedDirectories";
         private const string BlacklistedFilesKey = "Popcron.Builder.Settings.BlacklistedFiles";
         private const string ShowBlacklistedFilesKey = "Popcron.Builder.Settings.ShowBlacklistedFiles";
-        
+        private const string CurrentBuildDirectoryKey = "Popcron.Builder.CurrentBuildDirectory";
+        private const string BuildsDirectoryKey = "Popcron.Builder.BuildsDirectory";
+
         private static List<string> blacklistedDirectories = null;
         private static List<string> blacklistedFiles = null;
+
+        /// <summary>
+        /// Location of the current game build.
+        /// </summary>
+        public static string CurrentBuildDirectory
+        {
+            get
+            {
+                string projectPath = Directory.GetParent(Application.dataPath).FullName;
+                string buildsFolder = "Game";
+                string defaultValue = Path.Combine(projectPath, buildsFolder);
+                return EditorPrefs.GetString(PlayerSettings.productGUID + CurrentBuildDirectoryKey, defaultValue);
+            }
+            set
+            {
+                EditorPrefs.SetString(PlayerSettings.productGUID + CurrentBuildDirectoryKey, value);
+            }
+        }
+
+        /// <summary>
+        /// Location of all the archived builds.
+        /// </summary>
+        public static string BuildsDirectory
+        {
+            get
+            {
+                string projectPath = Directory.GetParent(Application.dataPath).FullName;
+                string buildsFolder = "Builds";
+                string defaultValue = Path.Combine(projectPath, buildsFolder);
+                return EditorPrefs.GetString(PlayerSettings.productGUID + BuildsDirectoryKey, defaultValue);
+            }
+            set
+            {
+                EditorPrefs.SetString(PlayerSettings.productGUID + BuildsDirectoryKey, value);
+            }
+        }
 
         /// <summary>
         /// Name of the game
