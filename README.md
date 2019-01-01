@@ -15,6 +15,8 @@ If using 2018.3.x, you can add a new entry to the manifest.json file in your Pac
 "com.popcron.builder": "https://github.com/popcron/builder.git"
 ```
 
+Also make sure that a SharpZipLib.dll is present in your `Assets/Plugins` folder with editor only setting enabled. A copy of this library already compiled as a .dll is available [here](https://github.com/icsharpcode/SharpZipLib/releases/tag/0.86.0.518).
+
 ## Uploading to GitHub
 To set this up, go to `Popcron/Builder/Settings` menu. From here, add a new service with the `GitHub` type.
 - **Owner**: This the github owner name. (eg. https://github.com/popcron/rocket-jump its `popcron`)
