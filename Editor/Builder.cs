@@ -28,7 +28,7 @@ namespace Popcron.Builder
         {
             get
             {
-                string platform = EditorPrefs.GetString(Settings.GameName + "_buildPlatform", "win");
+                string platform = EditorPrefs.GetString(Settings.File.GameName + "_buildPlatform", "win");
                 return platform;
             }
         }
@@ -221,7 +221,7 @@ namespace Popcron.Builder
             string platform = TargetToPlatform(target);
             string version = GetBuiltVersion(platform);
 
-            string root = Settings.BuildsDirectory;
+            string root = Settings.File.BuildsDirectory;
             if (path.StartsWith("/"))
             {
                 path = path.Substring(1);
@@ -259,7 +259,7 @@ namespace Popcron.Builder
             Print("Compressing " + path + " to " + exportZip, MessageType.Info);
             if (target == BuildTarget.WebGL)
             {
-                Archiver.Zip(path + "/" + Settings.ExecutableName, exportZip, platform);
+                Archiver.Zip(path + "/" + Settings.File.ExecutableName, exportZip, platform);
             }
             else
             {
@@ -267,7 +267,7 @@ namespace Popcron.Builder
             }
 
             File.Copy(exportZip, archivedZip);
-            EditorPrefs.SetString(Settings.GameName + "_builtArchive_" + platform, exportZip);
+            EditorPrefs.SetString(Settings.File.GameName + "_builtArchive_" + platform, exportZip);
             Print("Exported archive to : " + exportZip, MessageType.Info);
 
             Building = false;
@@ -296,10 +296,11 @@ namespace Popcron.Builder
 
         public static string GetBuildPath(string platform)
         {
-            string root = Settings.CurrentBuildDirectory;
-            if (platform == "win") return root + "/" + platform + "/" + Settings.ExecutableName + ".exe";
-            if (platform == "mac") return root + "/" + platform + "/" + Settings.ExecutableName + ".app";
-            if (platform == "linux") return root + "/" + platform + "/" + Settings.ExecutableName + ".x86";
+            string exec = Settings.File.ExecutableName;
+            string root = Settings.File.CurrentBuildDirectory;
+            if (platform == "win") return root + "/" + platform + "/" + exec + ".exe";
+            if (platform == "mac") return root + "/" + platform + "/" + exec + ".app";
+            if (platform == "linux") return root + "/" + platform + "/" + exec + ".x86";
             if (platform == "webgl") return root + "/" + platform;
 
             throw new Exception(platform + " is not supported.");
@@ -307,15 +308,16 @@ namespace Popcron.Builder
 
         public static string GetBuiltPath(string platform)
         {
-            return EditorPrefs.GetString(Settings.GameName + "_builtArchive_" + platform);
+            return EditorPrefs.GetString(Settings.File.GameName + "_builtArchive_" + platform);
         }
 
         public static string GetPlayPath(string platform)
         {
-            string root = Settings.CurrentBuildDirectory + "/" + platform + "/";
-            if (platform == "win") return root + Settings.ExecutableName + ".exe";
-            if (platform == "mac") return root + Settings.ExecutableName + ".app";
-            if (platform == "linux") return root + Settings.ExecutableName + ".x86";
+            string exec = Settings.File.ExecutableName;
+            string root = Settings.File.CurrentBuildDirectory + "/" + platform + "/";
+            if (platform == "win") return root + exec + ".exe";
+            if (platform == "mac") return root + exec + ".app";
+            if (platform == "linux") return root + exec + ".x86";
             if (platform == "webgl") return root + "/index.html";
 
             throw new Exception(platform + " is not supported.");
@@ -333,20 +335,20 @@ namespace Popcron.Builder
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
 
-            EditorPrefs.SetString(Settings.GameName + "_builtVersion_" + platform, Settings.CurrentVersion);
+            EditorPrefs.SetString(Settings.File.GameName + "_builtVersion_" + platform, Settings.CurrentVersion);
 
             Scene activeScene = SceneManager.GetActiveScene();
             string[] levels = new string[] { activeScene.path };
 
             //ensure that the directory exists
-            if (!Directory.Exists(Settings.CurrentBuildDirectory))
+            if (!Directory.Exists(Settings.File.CurrentBuildDirectory))
             {
-                Directory.CreateDirectory(Settings.CurrentBuildDirectory);
+                Directory.CreateDirectory(Settings.File.CurrentBuildDirectory);
             }
 
             //rebuild folder by deleting
             //and then by creating a new one
-            string folder = Settings.CurrentBuildDirectory + "/" + platform;
+            string folder = Settings.File.CurrentBuildDirectory + "/" + platform;
             if (Directory.Exists(folder))
             {
                 Directory.Delete(folder, true);
@@ -439,12 +441,12 @@ namespace Popcron.Builder
 
         public static string GetBuiltVersion(string platform)
         {
-            return EditorPrefs.GetString(Settings.GameName + "_builtVersion_" + platform);
+            return EditorPrefs.GetString(Settings.File.GameName + "_builtVersion_" + platform);
         }
 
         public static string GetUploadVersion(string platform)
         {
-            return EditorPrefs.GetString(Settings.GameName + "_uploadVersion_" + platform);
+            return EditorPrefs.GetString(Settings.File.GameName + "_uploadVersion_" + platform);
         }
 
         public static async void Upload(string platform)
@@ -453,8 +455,8 @@ namespace Popcron.Builder
             string path = GetBuiltPath(platform);
             string version = GetBuiltVersion(platform);
 
-            EditorPrefs.SetString(Settings.GameName + "_uploadedPlatform_", platform);
-            EditorPrefs.SetString(Settings.GameName + "_uploadVersion_" + platform, version);
+            EditorPrefs.SetString(Settings.File.GameName + "_uploadedPlatform_", platform);
+            EditorPrefs.SetString(Settings.File.GameName + "_uploadVersion_" + platform, version);
 
             //run through list of services
             //and upload to the ones that are allowed

@@ -10,130 +10,33 @@ using UnityEngine;
 
 namespace Popcron.Builder
 {
+
     public class Settings
     {
-        private const string GameNameKey = "Popcron.Builder.Settings.GameName";
-        private const string ExecutableNameKey = "Popcron.Builder.Settings.ExecutableName";
-        private const string BlacklistedDirectoriesKey = "Popcron.Builder.Settings.BlacklistedDirectories";
         private const string ShowBlacklistedDirectoriesKey = "Popcron.Builder.Settings.ShowBlacklistedDirectories";
-        private const string BlacklistedFilesKey = "Popcron.Builder.Settings.BlacklistedFiles";
         private const string ShowBlacklistedFilesKey = "Popcron.Builder.Settings.ShowBlacklistedFiles";
-        private const string CurrentBuildDirectoryKey = "Popcron.Builder.CurrentBuildDirectory";
-        private const string BuildsDirectoryKey = "Popcron.Builder.BuildsDirectory";
 
         private static List<string> blacklistedDirectories = null;
         private static List<string> blacklistedFiles = null;
+        private static SettingsFile file = null;
 
-        /// <summary>
-        /// Location of the current game build.
-        /// </summary>
-        public static string CurrentBuildDirectory
+        public static SettingsFile File
         {
             get
             {
-                string projectPath = Directory.GetParent(Application.dataPath).FullName;
-                string buildsFolder = "Game";
-                string defaultValue = Path.Combine(projectPath, buildsFolder);
-                return EditorPrefs.GetString(PlayerSettings.productGUID + CurrentBuildDirectoryKey, defaultValue);
-            }
-            set
-            {
-                EditorPrefs.SetString(PlayerSettings.productGUID + CurrentBuildDirectoryKey, value);
-            }
-        }
-
-        /// <summary>
-        /// Location of all the archived builds.
-        /// </summary>
-        public static string BuildsDirectory
-        {
-            get
-            {
-                string projectPath = Directory.GetParent(Application.dataPath).FullName;
-                string buildsFolder = "Builds";
-                string defaultValue = Path.Combine(projectPath, buildsFolder);
-                return EditorPrefs.GetString(PlayerSettings.productGUID + BuildsDirectoryKey, defaultValue);
-            }
-            set
-            {
-                EditorPrefs.SetString(PlayerSettings.productGUID + BuildsDirectoryKey, value);
-            }
-        }
-
-        /// <summary>
-        /// Name of the game
-        /// </summary>
-        public static string GameName
-        {
-            get
-            {
-                return EditorPrefs.GetString(PlayerSettings.productGUID + GameNameKey, PlayerSettings.productName);
-            }
-            set
-            {
-                EditorPrefs.SetString(PlayerSettings.productGUID + GameNameKey, value);
-            }
-        }
-
-        /// <summary>
-        /// Name of the executable
-        /// </summary>
-        public static string ExecutableName
-        {
-            get
-            {
-                return EditorPrefs.GetString(PlayerSettings.productGUID + ExecutableNameKey, PlayerSettings.productName);
-            }
-            set
-            {
-                EditorPrefs.SetString(PlayerSettings.productGUID + ExecutableNameKey, value);
-            }
-        }
-
-        /// <summary>
-        /// List of directories to exclude when archiving the game
-        /// </summary>
-        public static List<string> BlacklistedDirectories
-        {
-            get
-            {
-                if (blacklistedDirectories == null)
+                string path = Directory.GetParent(Application.dataPath).FullName;
+                path = Path.Combine(path, "ProjectSettings", "BuilderSettings.asset");
+                bool exists = System.IO.File.Exists(path);
+                if (file == null || !exists)
                 {
-                    string value = EditorPrefs.GetString(PlayerSettings.productGUID + BlacklistedDirectoriesKey);
-                    if (string.IsNullOrEmpty(value))
-                    {
-                        blacklistedDirectories = new List<string>();
-                    }
-                    else if (value.Contains('\n'))
-                    {
-                        blacklistedDirectories = value.Split('\n').ToList();
-                    }
-                    else
-                    {
-                        blacklistedDirectories = new List<string>() { value };
-                    }
+                    file = SettingsFile.Create(path);
                 }
 
-                return blacklistedDirectories;
-            }
-            set
-            {
-                if (value == null || value.Count == 0)
-                {
-                    blacklistedDirectories = new List<string>();
-                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + BlacklistedDirectoriesKey);
-                }
-                else if (blacklistedDirectories == null || !Enumerable.SequenceEqual(blacklistedDirectories, value))
-                {
-                    blacklistedDirectories = new List<string>();
-                    blacklistedDirectories.AddRange(value);
-
-                    EditorPrefs.SetString(PlayerSettings.productGUID + BlacklistedDirectoriesKey, string.Join("\n", value));
-                }
+                return file;
             }
         }
 
-        internal static bool ShowBlacklistedDirectories
+        public static bool ShowBlacklistedDirectories
         {
             get
             {
@@ -145,47 +48,7 @@ namespace Popcron.Builder
             }
         }
 
-        public static List<string> BlacklistedFiles
-        {
-            get
-            {
-                if (blacklistedFiles == null)
-                {
-                    string value = EditorPrefs.GetString(PlayerSettings.productGUID + BlacklistedFilesKey);
-                    if (string.IsNullOrEmpty(value))
-                    {
-                        blacklistedFiles = new List<string>();
-                    }
-                    else if (value.Contains('\n'))
-                    {
-                        blacklistedFiles = value.Split('\n').ToList();
-                    }
-                    else
-                    {
-                        blacklistedFiles = new List<string>() { value };
-                    }
-                }
-
-                return blacklistedFiles;
-            }
-            set
-            {
-                if (value == null || value.Count == 0)
-                {
-                    blacklistedFiles = new List<string>();
-                    EditorPrefs.DeleteKey(PlayerSettings.productGUID + BlacklistedFilesKey);
-                }
-                else if (blacklistedFiles == null || !Enumerable.SequenceEqual(blacklistedFiles, value))
-                {
-                    blacklistedFiles = new List<string>();
-                    blacklistedFiles.AddRange(value);
-
-                    EditorPrefs.SetString(PlayerSettings.productGUID + BlacklistedFilesKey, string.Join("\n", value));
-                }
-            }
-        }
-
-        internal static bool ShowBlacklistedFiles
+        public static bool ShowBlacklistedFiles
         {
             get
             {

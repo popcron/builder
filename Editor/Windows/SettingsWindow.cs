@@ -44,8 +44,8 @@ namespace Popcron.Builder
             if (show)
             {
                 EditorGUI.indentLevel++;
-                var directories = list;
-                var clone = Clone(directories);
+                List<string> directories = list;
+                List<string> clone = Clone(directories);
                 int count = clone.Count;
                 bool changed = false;
                 count = EditorGUILayout.IntField("Size", count);
@@ -88,14 +88,14 @@ namespace Popcron.Builder
         private void DrawBlacklistedDirectories()
         {
             bool show = Settings.ShowBlacklistedDirectories;
-            Settings.BlacklistedDirectories = DrawArray("Directories", Settings.BlacklistedDirectories, ref show);
+            Settings.File.BlacklistedDirectories = DrawArray("Directories", Settings.File.BlacklistedDirectories, ref show);
             Settings.ShowBlacklistedDirectories = show;
         }
 
         private void DrawBlacklistedFiles()
         {
             bool show = Settings.ShowBlacklistedFiles;
-            Settings.BlacklistedFiles = DrawArray("Files", Settings.BlacklistedFiles, ref show);
+            Settings.File.BlacklistedFiles = DrawArray("Files", Settings.File.BlacklistedFiles, ref show);
             Settings.ShowBlacklistedFiles = show;
         }
 
@@ -114,18 +114,18 @@ namespace Popcron.Builder
             GUILayout.Space(20);
 
             //draw generic info
-            Settings.GameName = EditorGUILayout.TextField("Game name", Settings.GameName);
-            Settings.ExecutableName = EditorGUILayout.TextField("Executable name", Settings.ExecutableName);
-            Settings.CurrentBuildDirectory = EditorGUILayout.TextField("Current build directory", Settings.CurrentBuildDirectory);
-            Settings.BuildsDirectory = EditorGUILayout.TextField("Builds directory", Settings.BuildsDirectory);
+            Settings.File.GameName = EditorGUILayout.TextField("Game name", Settings.File.GameName);
+            Settings.File.ExecutableName = EditorGUILayout.TextField("Executable name", Settings.File.ExecutableName);
+            Settings.File.CurrentBuildDirectory = EditorGUILayout.TextField("Current build directory", Settings.File.CurrentBuildDirectory);
+            Settings.File.BuildsDirectory = EditorGUILayout.TextField("Builds directory", Settings.File.BuildsDirectory);
 
             //show preview
-            string buildPath = Path.Combine(Settings.CurrentBuildDirectory, Builder.CurrentPlatform);
-            string archivePath = Path.Combine(Settings.BuildsDirectory, Builder.CurrentPlatform);
+            string buildPath = Path.Combine(Settings.File.CurrentBuildDirectory, Builder.CurrentPlatform);
+            string archivePath = Path.Combine(Settings.File.BuildsDirectory, Builder.CurrentPlatform);
             string[] lines = new string[]
             {
                 "",
-                "Game will be built as " + Settings.ExecutableName + ".exe",
+                "Game will be built as " + Settings.File.ExecutableName + ".exe",
                 "To the \"" + buildPath + "\" folder",
                 "And also saved to \"" + archivePath + "\" folder as a .zip",
                 ""

@@ -13,8 +13,8 @@ namespace Popcron.Builder
     {
         public static void CompileGameInfo(string platform, string version)
         {
-            string name = Settings.GameName;
-            string filePath = Application.dataPath + "/GameInfo.cs";
+            string name = Settings.File.GameName;
+            string filePath = Path.Combine(Application.dataPath, "GameInfo.cs");
             string[] fileContents = new string[]
             {
                 "namespace Popcron.Builder",

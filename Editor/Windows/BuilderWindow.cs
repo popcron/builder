@@ -78,12 +78,12 @@ namespace Popcron.Builder
             Rect lastRect = GUILayoutUtility.GetLastRect();
 
             //toolbar garbage
-            string platform = EditorPrefs.GetString(Settings.GameName + "_buildPlatform", "win");
+            string platform = EditorPrefs.GetString(Settings.File.GameName + "_buildPlatform", "win");
             string[] platforms = new string[] { "win", "linux", "mac", "webgl" };
             int currentIndex = IndexOf(platform, platforms);
 
             platform = platforms[GUI.Toolbar(new Rect(0, lastRect.y + lastRect.height + 5, Screen.width, 20), currentIndex, platforms, EditorStyles.toolbarButton)];
-            EditorPrefs.SetString(Settings.GameName + "_buildPlatform", platform);
+            EditorPrefs.SetString(Settings.File.GameName + "_buildPlatform", platform);
 
             GUILayout.Space(25);
 

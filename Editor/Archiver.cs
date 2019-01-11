@@ -40,7 +40,7 @@ namespace Popcron.Builder
             string[] files = Directory.GetFiles(path);
             foreach (string filename in files)
             {
-                if (Settings.BlacklistedFiles.Contains(Path.GetFileName(filename)))
+                if (Settings.File.BlacklistedFiles.Contains(Path.GetFileName(filename)))
                 {
                     //dont process this file
                     continue;
@@ -49,7 +49,7 @@ namespace Popcron.Builder
                 FileInfo fi = new FileInfo(filename);
 
                 string entryName = filename.Substring(folderOffset); // Makes the name in zip based on the folder
-                entryName = ZipEntry.CleanName(entryName.Replace(platform, Settings.ExecutableName)); // Removes drive from name and fixes slash direction
+                entryName = ZipEntry.CleanName(entryName.Replace(platform, Settings.File.ExecutableName)); // Removes drive from name and fixes slash direction
                 ZipEntry newEntry = new ZipEntry(entryName)
                 {
                     DateTime = fi.LastWriteTime, // Note the zip format stores 2 second granularity
@@ -71,7 +71,7 @@ namespace Popcron.Builder
             string[] directories = Directory.GetDirectories(path);
             foreach (var directory in directories)
             {
-                if (Settings.BlacklistedDirectories.Contains(Path.GetFileNameWithoutExtension(directory)))
+                if (Settings.File.BlacklistedDirectories.Contains(Path.GetFileNameWithoutExtension(directory)))
                 {
                     //dont process this folder
                     continue;

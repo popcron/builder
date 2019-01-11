@@ -141,7 +141,7 @@ namespace Popcron.Builder
                 return;
             }
 
-            string releaseName = Settings.GameName + " " + version;
+            string releaseName = Settings.File.GameName + " " + version;
             string tag = Prefix + version;
 
             string auth = "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(Owner + ":" + Token));
@@ -277,7 +277,7 @@ namespace Popcron.Builder
                 EditorGUI.indentLevel--;
             }
 
-            string release = "\n    Name: " + Settings.GameName + " " + Settings.CurrentVersion;
+            string release = "\n    Name: " + Settings.File.GameName + " " + Settings.CurrentVersion;
             release += "\n    Tag: " + Prefix + Settings.CurrentVersion;
 
             EditorGUILayout.HelpBox("Release info:" + release, MessageType.Info);
