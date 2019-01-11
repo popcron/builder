@@ -251,9 +251,9 @@ namespace Popcron.Builder
             }
 
             //ensure the folder exists
-            if (!Directory.Exists(root + "/" + platform))
+            if (!Directory.Exists(root + "/" + platform + "/" + version))
             {
-                Directory.CreateDirectory(root);
+                Directory.CreateDirectory(root + "/" + platform + "/" + version);
             }
 
             Print("Compressing " + path + " to " + exportZip, MessageType.Info);
