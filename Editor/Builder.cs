@@ -334,7 +334,7 @@ namespace Popcron.Builder
             Building = true;
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
-            string root = Settings.CurrentBuildDirectory;
+            string root = Settings.File.CurrentBuildDirectory;
 
             //ensure that the directory exists
             if (!Directory.Exists(root + "/" + platform))
