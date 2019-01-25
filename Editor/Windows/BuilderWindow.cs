@@ -79,7 +79,7 @@ namespace Popcron.Builder
 
             //toolbar garbage
             string platform = EditorPrefs.GetString(Settings.File.GameName + "_buildPlatform", "win");
-            string[] platforms = new string[] { "win", "linux", "mac", "webgl" };
+            string[] platforms = new string[] { "win", "linux", "mac", "webgl", "android" };
             int currentIndex = IndexOf(platform, platforms);
 
             platform = platforms[GUI.Toolbar(new Rect(0, lastRect.y + lastRect.height + 5, Screen.width, 20), currentIndex, platforms, EditorStyles.toolbarButton)];

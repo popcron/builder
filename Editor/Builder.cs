@@ -241,34 +241,53 @@ namespace Popcron.Builder
                 path += "/webgl";
             }
 
+            //ensure the folder builds exists
+            if (!Directory.Exists(root + "/" + platform))
+            {
+                Directory.CreateDirectory(root + "/" + platform);
+            }
+
             string exportZip = path + ".zip";
             string archivedZip = root + "/" + platform + "/" + version + " (" + date + ").zip";
-
-            //delete the old zip
-            if (File.Exists(exportZip))
+            if (target == BuildTarget.Android)
             {
-                File.Delete(exportZip);
-            }
+                exportZip = path + "/" + Settings.File.ExecutableName + ".apk";
+                archivedZip = root + "/" + platform + "/" + version + " (" + date + ").apk";
 
-            //ensure the folder exists
-            if (!Directory.Exists(root + "/" + platform + "/" + version))
-            {
-                Directory.CreateDirectory(root + "/" + platform + "/" + version);
-            }
-
-            Print("Compressing " + path + " to " + exportZip, MessageType.Info);
-            if (target == BuildTarget.WebGL)
-            {
-                Archiver.Zip(path + "/" + Settings.File.ExecutableName, exportZip, platform);
             }
             else
             {
-                Archiver.Zip(path, exportZip, platform);
+                //delete the old zip
+                if (File.Exists(exportZip))
+                {
+                    File.Delete(exportZip);
+                }
             }
 
-            File.Copy(exportZip, archivedZip);
-            EditorPrefs.SetString(Settings.File.GameName + "_builtArchive_" + platform, exportZip);
-            Print("Exported archive to : " + exportZip, MessageType.Info);
+            //dont put android builds into an archive
+            //theyre already a single file
+            if (target != BuildTarget.Android)
+            {
+                Print("Compressing " + path + " to " + exportZip, MessageType.Info);
+                if (target == BuildTarget.WebGL)
+                {
+                    Archiver.Zip(path + "/" + Settings.File.ExecutableName, exportZip, platform);
+                }
+                else
+                {
+                    Archiver.Zip(path, exportZip, platform);
+                    File.Copy(exportZip, archivedZip);
+                }
+
+                EditorPrefs.SetString(Settings.File.GameName + "_builtArchive_" + platform, exportZip);
+                Print("Exported archive to : " + exportZip, MessageType.Info);
+            }
+            else
+            {
+                EditorPrefs.SetString(Settings.File.GameName + "_builtArchive_" + platform, exportZip);
+                //UnityEngine.Debug.Log(exportZip + " > " + archivedZip);
+                File.Copy(exportZip, archivedZip);
+            }
 
             Building = false;
             OnPostBuild(platform);
@@ -280,6 +299,7 @@ namespace Popcron.Builder
             if (platform == "linux") return BuildTarget.StandaloneLinuxUniversal;
             if (platform == "mac") return BuildTarget.StandaloneOSX;
             if (platform == "webgl") return BuildTarget.WebGL;
+            if (platform == "android") return BuildTarget.Android;
 
             throw new Exception(platform + " is not supported.");
         }
@@ -290,20 +310,23 @@ namespace Popcron.Builder
             if (target == BuildTarget.StandaloneOSX) return "mac";
             if (target == BuildTarget.StandaloneLinuxUniversal) return "linux";
             if (target == BuildTarget.WebGL) return "webgl";
+            if (target == BuildTarget.Android) return "android";
 
             throw new Exception(target + " is not supported.");
         }
 
         public static string GetBuildPath(string platform)
         {
+            string path = "";
             string exec = Settings.File.ExecutableName;
             string root = Settings.File.CurrentBuildDirectory;
-            if (platform == "win") return root + "/" + platform + "/" + exec + ".exe";
-            if (platform == "mac") return root + "/" + platform + "/" + exec + ".app";
-            if (platform == "linux") return root + "/" + platform + "/" + exec + ".x86";
-            if (platform == "webgl") return root + "/" + platform;
+            if (platform == "win") path = root + "/" + platform + "/" + exec + ".exe";
+            if (platform == "mac") path = root + "/" + platform + "/" + exec + ".app";
+            if (platform == "linux") path = root + "/" + platform + "/" + exec + ".x86";
+            if (platform == "webgl") path = root + "/" + platform;
+            if (platform == "android") path = root + "/" + platform + "/" + exec + ".apk";
 
-            throw new Exception(platform + " is not supported.");
+            return path.Replace("\\", "/");
         }
 
         public static string GetBuiltPath(string platform)
@@ -313,14 +336,16 @@ namespace Popcron.Builder
 
         public static string GetPlayPath(string platform)
         {
+            string path = "";
             string exec = Settings.File.ExecutableName;
             string root = Settings.File.CurrentBuildDirectory + "/" + platform + "/";
-            if (platform == "win") return root + exec + ".exe";
-            if (platform == "mac") return root + exec + ".app";
-            if (platform == "linux") return root + exec + ".x86";
-            if (platform == "webgl") return root + "/index.html";
+            if (platform == "win") path = root + exec + ".exe";
+            if (platform == "mac") path = root + exec + ".app";
+            if (platform == "linux") path = root + exec + ".x86";
+            if (platform == "webgl") path = root + "/index.html";
+            if (platform == "android") path = root + exec + ".apk";
 
-            throw new Exception(platform + " is not supported.");
+            return path.Replace("\\", "/");
         }
 
         public static void BuildAndPlay(string platform)
@@ -367,6 +392,14 @@ namespace Popcron.Builder
                 options |= BuildOptions.ConnectWithProfiler;
             }
 
+            //if on android, set build mode to mono and use custom options
+            if (platform == "android")
+            {
+                PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
+                options = BuildOptions.None;
+            }
+
+            //UnityEngine.Debug.Log("path: " + path + ", target: " + target + ", options: " + options);
             BuildReport report = null;
             if (ScriptingImplementation == ScriptingImplementation.IL2CPP)
             {
