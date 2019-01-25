@@ -359,17 +359,18 @@ namespace Popcron.Builder
             Building = true;
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
+            string root = Settings.File.CurrentBuildDirectory;
 
+            //ensure that the directory exists
+            if (!Directory.Exists(root + "/" + platform))
+            {
+                Directory.CreateDirectory(root + "/" + platform);
+            }
+            
             EditorPrefs.SetString(Settings.File.GameName + "_builtVersion_" + platform, Settings.CurrentVersion);
 
             Scene activeScene = SceneManager.GetActiveScene();
             string[] levels = new string[] { activeScene.path };
-
-            //ensure that the directory exists
-            if (!Directory.Exists(Settings.File.CurrentBuildDirectory))
-            {
-                Directory.CreateDirectory(Settings.File.CurrentBuildDirectory);
-            }
 
             //rebuild folder by deleting
             //and then by creating a new one
