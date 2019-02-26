@@ -67,8 +67,8 @@ namespace Popcron.Builder
                 string month = "-";
                 DateTime now = DateTime.Now;
 
-                if (now.Month == 1) month = "fb";
-                else if (now.Month == 2) month = "jy";
+                if (now.Month == 1) month = "jy";
+                else if (now.Month == 2) month = "fb";
                 else if (now.Month == 3) month = "mr";
                 else if (now.Month == 4) month = "ap";
                 else if (now.Month == 5) month = "my";
