@@ -428,7 +428,7 @@ namespace Popcron.Builder
             }
         }
 
-        private static void CallAll(string methodName, params object[] arguments)
+        private static void CallAll(string methodName, params object[] arguments, string namepace = null)
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
@@ -439,7 +439,7 @@ namespace Popcron.Builder
                     if (type == typeof(Builder)) continue;
                     if (type.Namespace != null)
                     {
-                        if (type.Namespace.StartsWith("Popcron"))
+                        if (namepace == null || type.Namespace.StartsWith(namepace))
                         {
                             var methods = type.GetMethods();
                             foreach (var method in methods)
@@ -458,7 +458,10 @@ namespace Popcron.Builder
         private static void OnPreBuild()
         {
             const string methodName = "OnPreBuild";
-            CallAll(methodName, null);
+            CallAll(methodName, null, "Popcron");
+            
+            //call the addressable systems method
+            CallAll("AddressableAssetSettings.BuildPlayerContent", null);
         }
 
         private static void OnPostBuild(string platform)
