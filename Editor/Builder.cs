@@ -428,7 +428,7 @@ namespace Popcron.Builder
             }
         }
 
-        private static void CallAll(string methodName, params object[] arguments, string namepace = null)
+        private static void CallAll(string methodName, string namepace = null, params object[] arguments)
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
@@ -458,10 +458,10 @@ namespace Popcron.Builder
         private static void OnPreBuild()
         {
             const string methodName = "OnPreBuild";
-            CallAll(methodName, null, "Popcron");
+            CallAll(methodName, "Popcron", null);
             
             //call the addressable systems method
-            CallAll("AddressableAssetSettings.BuildPlayerContent", null);
+            CallAll("AddressableAssetSettings.BuildPlayerContent", null, null);
         }
 
         private static void OnPostBuild(string platform)
