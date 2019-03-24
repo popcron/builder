@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
+using UnityEngine;
 
 namespace Popcron.Builder
 {
@@ -40,7 +41,8 @@ namespace Popcron.Builder
             string[] files = Directory.GetFiles(path);
             foreach (string filename in files)
             {
-                if (Settings.File.BlacklistedFiles.Contains(Path.GetFileName(filename)))
+                string fn = Path.GetFileName(filename);
+                if (Settings.File.BlacklistedFiles.Contains(fn))
                 {
                     //dont process this file
                     continue;
@@ -71,7 +73,8 @@ namespace Popcron.Builder
             string[] directories = Directory.GetDirectories(path);
             foreach (var directory in directories)
             {
-                if (Settings.File.BlacklistedDirectories.Contains(Path.GetFileNameWithoutExtension(directory)))
+                string dir = Path.GetFileNameWithoutExtension(directory);
+                if (Settings.File.BlacklistedDirectories.Contains(dir))
                 {
                     //dont process this folder
                     continue;

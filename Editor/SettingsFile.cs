@@ -24,10 +24,10 @@ namespace Popcron.Builder
         private string executableName;
 
         [SerializeField]
-        private List<string> blacklistedDirectories;
+        private List<string> blacklistedDirectories = new List<string>();
 
         [SerializeField]
-        private List<string> blacklistedFiles;
+        private List<string> blacklistedFiles = new List<string>();
 
         public string CurrentBuildDirectory
         {
@@ -102,7 +102,7 @@ namespace Popcron.Builder
             }
             set
             {
-                blacklistedDirectories = value;
+                blacklistedFiles = value;
                 Save();
             }
         }
@@ -130,7 +130,10 @@ namespace Popcron.Builder
                 file.executableName = productName;
 
                 file.blacklistedDirectories = new List<string>();
+                file.blacklistedDirectories.Add(productName + "_BackUpThisFolder_ButDontShipItWithYourGame");
+
                 file.blacklistedFiles = new List<string>();
+                file.blacklistedFiles.Add("WiPixEventRuntime.dll");
 
                 file.Save();
             }

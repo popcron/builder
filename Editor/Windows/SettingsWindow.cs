@@ -44,25 +44,23 @@ namespace Popcron.Builder
             if (show)
             {
                 EditorGUI.indentLevel++;
-                List<string> directories = list;
-                List<string> clone = Clone(directories);
-                int count = clone.Count;
+                List<string> clone = Clone(list);
+                int size = clone.Count;
                 bool changed = false;
-                count = EditorGUILayout.IntField("Size", count);
+                size = EditorGUILayout.IntField("Size", size);
 
                 //sanitize the input
-                if (count < 0) count = 0;
-                if (count > 32) count = 32;
+                if (size < 0) size = 0;
+                if (size > 32) size = 32;
 
                 //size of list changed
-                if (count != directories.Count)
+                if (size != list.Count)
                 {
-                    Resize(clone, count);
+                    Resize(clone, size);
                     changed = true;
                 }
 
                 //draw the list
-
                 for (int i = 0; i < clone.Count; i++)
                 {
                     string directory = clone[i];
