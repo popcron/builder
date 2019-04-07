@@ -6,7 +6,8 @@ An editor only utility that allows for building a game directly to a zip file. W
 ## Features
 - Archives builds to a zip file after building
 - Can upload directly to GitHub releases or itch.io
-- Auto called `OnPreBuild` and `OnPostBuild` methods
+- Auto called `OnPreBuild` method before building
+- Auto called `OnPostBuild` method after building but before archiving
 
 ## Requirements
 - .NET Framework 4.5
