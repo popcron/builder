@@ -458,7 +458,9 @@ namespace Popcron.Builder
         private static void OnPreBuild()
         {
             const string methodName = "OnPreBuild";
-            CallAll(methodName, "Popcron", null);
+            
+            //call the OnPreBuild method from any namespace
+            CallAll(methodName, null, null);
             
             //call the addressable systems method
             CallAll("AddressableAssetSettings.BuildPlayerContent", null, null);
