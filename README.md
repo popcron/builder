@@ -3,6 +3,11 @@
 # Builder
 An editor only utility that allows for building a game directly to a zip file. With support for uploading to itch.io and github releases for both private and public repositories.
 
+## Features
+- Archives builds to a zip file after building
+- Can upload directly to GitHub releases or itch.io
+- Auto called `OnPreBuild` and `OnPostBuild` methods
+
 ## Requirements
 - .NET Framework 4.5
 - [SharpZipLib](https://github.com/icsharpcode/SharpZipLib) for compression during builds
