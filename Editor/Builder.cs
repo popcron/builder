@@ -378,8 +378,16 @@ namespace Popcron.Builder
             string folder = Settings.File.CurrentBuildDirectory + "/" + platform;
             if (Directory.Exists(folder))
             {
-                Directory.Delete(folder, true);
+                try
+                {
+                    Directory.Delete(folder, true);
+                }
+                catch
+                {
+                    //sharing violation
+                }
             }
+                
             Directory.CreateDirectory(folder);
 
             //compile gameinfo file
