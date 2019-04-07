@@ -253,7 +253,6 @@ namespace Popcron.Builder
             {
                 exportZip = path + "/" + Settings.File.ExecutableName + ".apk";
                 archivedZip = root + "/" + platform + "/" + version + " (" + date + ").apk";
-
             }
             else
             {
@@ -263,6 +262,9 @@ namespace Popcron.Builder
                     File.Delete(exportZip);
                 }
             }
+            
+            //call on post build after finishing building, but before archiving
+            OnPostBuild(platform, path);
 
             //dont put android builds into an archive
             //theyre already a single file
@@ -290,7 +292,6 @@ namespace Popcron.Builder
             }
 
             Building = false;
-            OnPostBuild(platform);
         }
 
         public static BuildTarget PlatformToTarget(string platform)
@@ -466,10 +467,10 @@ namespace Popcron.Builder
             CallAll("AddressableAssetSettings.BuildPlayerContent", null, null);
         }
 
-        private static void OnPostBuild(string platform)
+        private static void OnPostBuild(string platform, string path)
         {
             const string methodName = "OnPostBuild";
-            CallAll(methodName, platform);
+            CallAll(methodName, null, platform, path);
 
             if (PlayOnBuild)
             {
