@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System;
 
+using Debug = UnityEngine.Debug;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Build.Reporting;
-using UnityEngine.SceneManagement;
 
 namespace Popcron.Builder
 {
@@ -21,6 +21,13 @@ namespace Popcron.Builder
         private const string BuildModeKey = "Popcron.Builder.BuildMode";
         private const string LogKey = "Popcron.Builder.Log";
         private const string ServicesKey = "Popcron.Builder.Services";
+
+        private const string WindowsExtension = "exe";
+        private const string MacExtension = "app";
+        private const string LinuxExtension = "x86";
+        private const string AndroidExtension = "apk";
+        private const string WebGLIndexFile = "index.html";
+        private const string ArchiveExtension = "zip";
 
         private static List<Service> services = null;
 
@@ -221,7 +228,7 @@ namespace Popcron.Builder
             string platform = TargetToPlatform(target);
             string version = GetBuiltVersion(platform);
 
-            string root = Settings.File.BuildsDirectory;
+            string root = Path.GetFullPath(Settings.File.BuildsDirectory);
             if (path.StartsWith("/"))
             {
                 path = path.Substring(1);
@@ -238,6 +245,7 @@ namespace Popcron.Builder
             //so directly reference the folder 
             if (target == BuildTarget.WebGL)
             {
+                path = path.TrimEnd('/');
                 path += "/webgl";
             }
 
@@ -247,12 +255,13 @@ namespace Popcron.Builder
                 Directory.CreateDirectory(root + "/" + platform);
             }
 
-            string exportZip = path + ".zip";
-            string archivedZip = root + "/" + platform + "/" + version + " (" + date + ").zip";
+            string exportZip = Path.ChangeExtension(path, ArchiveExtension);
+            string achiveFileName = Path.ChangeExtension(version + " (" + date + ")", ArchiveExtension);
+            string archivedZipPath = Path.Combine(root, platform, achiveFileName);
             if (target == BuildTarget.Android)
             {
-                exportZip = path + "/" + Settings.File.ExecutableName + ".apk";
-                archivedZip = root + "/" + platform + "/" + version + " (" + date + ").apk";
+                exportZip = Path.Combine(path, Path.ChangeExtension(Settings.File.ExecutableName, AndroidExtension));
+                archivedZipPath = Path.Combine(root, platform, achiveFileName);
             }
             else
             {
@@ -262,7 +271,7 @@ namespace Popcron.Builder
                     File.Delete(exportZip);
                 }
             }
-            
+
             //call on post build after finishing building, but before archiving
             OnPostBuild(platform, path);
 
@@ -271,24 +280,16 @@ namespace Popcron.Builder
             if (target != BuildTarget.Android)
             {
                 Print("Compressing " + path + " to " + exportZip, MessageType.Info);
-                if (target == BuildTarget.WebGL)
-                {
-                    Archiver.Zip(path + "/" + Settings.File.ExecutableName, exportZip, platform);
-                }
-                else
-                {
-                    Archiver.Zip(path, exportZip, platform);
-                    File.Copy(exportZip, archivedZip);
-                }
-
+                Archiver.Zip(path, exportZip, platform);
+                File.Copy(exportZip, archivedZipPath, true);
                 EditorPrefs.SetString(Settings.File.GameName + "_builtArchive_" + platform, exportZip);
                 Print("Exported archive to : " + exportZip, MessageType.Info);
             }
             else
             {
                 EditorPrefs.SetString(Settings.File.GameName + "_builtArchive_" + platform, exportZip);
-                //UnityEngine.Debug.Log(exportZip + " > " + archivedZip);
-                File.Copy(exportZip, archivedZip);
+                //Debug.Log(exportZip + " > " + archivedZip);
+                File.Copy(exportZip, archivedZipPath);
             }
 
             Building = false;
@@ -319,15 +320,21 @@ namespace Popcron.Builder
         public static string GetBuildPath(string platform)
         {
             string path = "";
-            string exec = Settings.File.ExecutableName;
-            string root = Settings.File.CurrentBuildDirectory;
-            if (platform == "win") path = root + "/" + platform + "/" + exec + ".exe";
-            if (platform == "mac") path = root + "/" + platform + "/" + exec + ".app";
-            if (platform == "linux") path = root + "/" + platform + "/" + exec + ".x86";
-            if (platform == "webgl") path = root + "/" + platform;
-            if (platform == "android") path = root + "/" + platform + "/" + exec + ".apk";
+            string executableName = Settings.File.ExecutableName;
+            string root = Path.GetFullPath(Settings.File.CurrentBuildDirectory);
+            if (platform == "win") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, WindowsExtension));
+            if (platform == "mac") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, MacExtension));
+            if (platform == "linux") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, LinuxExtension));
+            if (platform == "webgl") path = Path.Combine(root, platform);
+            if (platform == "android") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, AndroidExtension));
 
             return path.Replace("\\", "/");
+        }
+
+        public static string GetBuildFolder(string platform)
+        {
+            string root = Path.GetFullPath(Settings.File.CurrentBuildDirectory);
+            return Path.Combine(root, platform).Replace("\\", "/");
         }
 
         public static string GetBuiltPath(string platform)
@@ -338,13 +345,13 @@ namespace Popcron.Builder
         public static string GetPlayPath(string platform)
         {
             string path = "";
-            string exec = Settings.File.ExecutableName;
-            string root = Settings.File.CurrentBuildDirectory + "/" + platform + "/";
-            if (platform == "win") path = root + exec + ".exe";
-            if (platform == "mac") path = root + exec + ".app";
-            if (platform == "linux") path = root + exec + ".x86";
-            if (platform == "webgl") path = root + "/index.html";
-            if (platform == "android") path = root + exec + ".apk";
+            string executableName = Settings.File.ExecutableName;
+            string root = Path.GetFullPath(Settings.File.CurrentBuildDirectory);
+            if (platform == "win") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, WindowsExtension));
+            if (platform == "mac") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, MacExtension));
+            if (platform == "linux") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, LinuxExtension));
+            if (platform == "webgl") path = Path.Combine(root, platform, WebGLIndexFile);
+            if (platform == "android") path = Path.Combine(root, platform, Path.ChangeExtension(executableName, AndroidExtension));
 
             return path.Replace("\\", "/");
         }
@@ -360,35 +367,26 @@ namespace Popcron.Builder
             Building = true;
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
-            string root = Settings.File.CurrentBuildDirectory;
 
             //ensure that the directory exists
-            if (!Directory.Exists(root + "/" + platform))
+            string folder = GetBuildFolder(platform);
+            if (!Directory.Exists(folder))
             {
-                Directory.CreateDirectory(root + "/" + platform);
+                Directory.CreateDirectory(folder);
             }
-            
+
             EditorPrefs.SetString(Settings.File.GameName + "_builtVersion_" + platform, Settings.CurrentVersion);
 
-            Scene activeScene = SceneManager.GetActiveScene();
-            string[] levels = new string[] { activeScene.path };
+            //create the scenes array using the build settings
+            string[] scenes = new string[EditorBuildSettings.scenes.Length];
+            for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+            {
+                EditorBuildSettingsScene scene = EditorBuildSettings.scenes[i];
+                scenes[i] = scene.path;
+            }
 
             //rebuild folder by deleting
             //and then by creating a new one
-            string folder = Settings.File.CurrentBuildDirectory + "/" + platform;
-            if (Directory.Exists(folder))
-            {
-                try
-                {
-                    Directory.Delete(folder, true);
-                }
-                catch
-                {
-                    //sharing violation
-                }
-            }
-                
-            Directory.CreateDirectory(folder);
 
             //compile gameinfo file
             GameInfoGenerator.CompileGameInfo(platform, Settings.CurrentVersion);
@@ -416,18 +414,18 @@ namespace Popcron.Builder
                 //try to use il2cpp
                 PlayerSettings.SetIncrementalIl2CppBuild(BuildTargetGroup.Standalone, true);
                 PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.IL2CPP);
-                report = BuildPipeline.BuildPlayer(levels, path, target, options);
+                report = BuildPipeline.BuildPlayer(scenes, path, target, options);
                 if (report.summary.result == BuildResult.Failed)
                 {
                     //il2cpp failed, so try mono
                     PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
-                    report = BuildPipeline.BuildPlayer(levels, path, target, options);
+                    report = BuildPipeline.BuildPlayer(scenes, path, target, options);
                 }
             }
             else
             {
                 PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
-                report = BuildPipeline.BuildPlayer(levels, path, target, options);
+                report = BuildPipeline.BuildPlayer(scenes, path, target, options);
             }
 
             //success
@@ -467,10 +465,10 @@ namespace Popcron.Builder
         private static void OnPreBuild()
         {
             const string methodName = "OnPreBuild";
-            
+
             //call the OnPreBuild method from any namespace
             CallAll(methodName, null, null);
-            
+
             //call the addressable systems method
             CallAll("AddressableAssetSettings.BuildPlayerContent", null, null);
         }

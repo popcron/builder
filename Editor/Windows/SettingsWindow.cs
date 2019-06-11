@@ -118,13 +118,13 @@ namespace Popcron.Builder
             Settings.File.BuildsDirectory = EditorGUILayout.TextField("Builds directory", Settings.File.BuildsDirectory);
 
             //show preview
-            string buildPath = Path.Combine(Settings.File.CurrentBuildDirectory, Builder.CurrentPlatform);
-            string archivePath = Path.Combine(Settings.File.BuildsDirectory, Builder.CurrentPlatform);
+            string buildFolder = Builder.GetBuildFolder(Builder.CurrentPlatform);
+            string archivePath = Path.Combine(Path.GetFullPath(Settings.File.BuildsDirectory), Builder.CurrentPlatform);
             string[] lines = new string[]
             {
                 "",
                 "Game will be built as " + Settings.File.ExecutableName + ".exe",
-                "To the \"" + buildPath + "\" folder",
+                "To the \"" + buildFolder + "\" folder",
                 "And also saved to \"" + archivePath + "\" folder as a .zip",
                 ""
             };

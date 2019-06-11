@@ -119,10 +119,10 @@ namespace Popcron.Builder
             {
                 string productName = PlayerSettings.productName;
                 string projectPath = Directory.GetParent(Application.dataPath).FullName;
-                
+
                 string buildsFolder = Path.Combine(projectPath, "Builds");
                 string gameFolder = Path.Combine(projectPath, "Game");
-                
+
                 file.buildsDirectory = buildsFolder;
                 file.currentBuildDirectory = gameFolder;
 
