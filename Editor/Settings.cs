@@ -1,23 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
 namespace Popcron.Builder
 {
-
     public class Settings
     {
         private const string ShowBlacklistedDirectoriesKey = "Popcron.Builder.Settings.ShowBlacklistedDirectories";
         private const string ShowBlacklistedFilesKey = "Popcron.Builder.Settings.ShowBlacklistedFiles";
 
-        private static List<string> blacklistedDirectories = null;
-        private static List<string> blacklistedFiles = null;
         private static SettingsFile file = null;
 
         public static SettingsFile File

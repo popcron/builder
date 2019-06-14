@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -176,7 +173,7 @@ namespace Popcron.Builder
             ItchAccount = EditorGUILayout.TextField("Account", ItchAccount);
             ItchProjectName = EditorGUILayout.TextField("Name", ItchProjectName);
             ButlerDirectory = EditorGUILayout.TextField("Butler path", ButlerDirectory);
-            
+
             if (DownloadProgress != null || !File.Exists(ButlerDirectory + "/butler.exe"))
             {
                 if (DownloadProgress != null)

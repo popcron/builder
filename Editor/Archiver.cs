@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using ICSharpCode.SharpZipLib.Core;
+﻿using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
-using UnityEngine;
+using System.IO;
 
 namespace Popcron.Builder
 {
@@ -35,7 +28,7 @@ namespace Popcron.Builder
             zipStream.IsStreamOwner = true; // Makes the Close also Close the underlying stream
             zipStream.Close();
         }
-        
+
         private static void CompressFolder(string path, ZipOutputStream zipStream, int folderOffset, string platform)
         {
             string[] files = Directory.GetFiles(path);

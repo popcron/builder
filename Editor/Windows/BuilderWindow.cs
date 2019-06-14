@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -35,6 +33,12 @@ namespace Popcron.Builder
 
             GUILayout.EndHorizontal();
             GUI.EndGroup();
+
+            GUIContent icon = EditorGUIUtility.IconContent(EditorGUIUtility.isProSkin ? "d_Settings" : "Settings");
+            if (GUI.Button(new Rect(Screen.width - 20, -2, 20, 20), icon, EditorStyles.miniLabel))
+            {
+                SettingsWindow.Initialize();
+            }
         }
 
         private void OnGUI()
@@ -78,7 +82,7 @@ namespace Popcron.Builder
             Rect lastRect = GUILayoutUtility.GetLastRect();
 
             //toolbar garbage
-            string platform = EditorPrefs.GetString(Settings.File.GameName + "_buildPlatform", "win");
+            string platform = EditorPrefs.GetString(PlayerSettings.productGUID + "_buildPlatform", "win");
             string[] platforms = new string[] { "win", "linux", "mac", "webgl", "android" };
             int currentIndex = IndexOf(platform, platforms);
 

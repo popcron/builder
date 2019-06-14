@@ -1,21 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using UnityEditor;
-using UnityEngine;
 
 namespace Popcron.Builder
 {
     public abstract class Service
     {
-        private const string ShowKey = "Popcron.Builder.Service";
-
         private static Dictionary<string, Type> typeToType = null;
 
         public string Name { get; set; } = "";
-
         public int Index { get; set; } = 0;
 
         public abstract string Type { get; }
@@ -33,7 +27,7 @@ namespace Popcron.Builder
 
                 if (typeToType == null)
                 {
-                    Get("", "");
+                    BuildCache();
                 }
 
                 for (int i = 0; i < typeToType.Count; i++)
@@ -47,26 +41,30 @@ namespace Popcron.Builder
             }
         }
 
+        private static void BuildCache()
+        {
+            typeToType = new Dictionary<string, Type>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in assemblies)
+            {
+                Type[] types = assembly.GetTypes();
+                foreach (var t in types)
+                {
+                    if (t.IsAbstract) continue;
+                    if (t.IsSubclassOf(typeof(Service)))
+                    {
+                        Service service = Activator.CreateInstance(t) as Service;
+                        typeToType.Add(service.Type, t);
+                    }
+                }
+            }
+        }
+
         public static Service Get(string type, string name)
         {
             if (typeToType == null)
             {
-                //load all services
-                typeToType = new Dictionary<string, Type>();
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                foreach (var assembly in assemblies)
-                {
-                    Type[] types = assembly.GetTypes();
-                    foreach (var t in types)
-                    {
-                        if (t.IsAbstract) continue;
-                        if (t.IsSubclassOf(typeof(Service)))
-                        {
-                            Service service = Activator.CreateInstance(t) as Service;
-                            typeToType.Add(service.Type, t);
-                        }
-                    }
-                }
+                BuildCache();
             }
 
             if (typeToType.TryGetValue(type, out Type serviceType))

@@ -35,7 +35,7 @@ namespace Popcron.Builder
         {
             get
             {
-                string platform = EditorPrefs.GetString(Settings.File.GameName + "_buildPlatform", "win");
+                string platform = EditorPrefs.GetString(PlayerSettings.productGUID + "_buildPlatform", "win");
                 return platform;
             }
         }

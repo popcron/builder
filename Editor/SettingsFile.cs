@@ -6,6 +6,12 @@ using UnityEngine;
 
 namespace Popcron.Builder
 {
+    public enum PullMode
+    {
+        Next,
+        Latest
+    }
+
     [Serializable]
     public class SettingsFile
     {
@@ -107,6 +113,58 @@ namespace Popcron.Builder
             }
         }
 
+        public bool UploadAfterBuild
+        {
+            get
+            {
+                bool uploadAfterBuild = EditorPrefs.GetBool(PlayerSettings.productGUID + "_uploadAfterBuild", false);
+                return uploadAfterBuild;
+            }
+            set
+            {
+                EditorPrefs.SetBool(PlayerSettings.productGUID + "_uploadAfterBuild", value);
+            }
+        }
+
+        public int GitFetchInterval
+        {
+            get
+            {
+                int gitFetchInterval = EditorPrefs.GetInt(PlayerSettings.productGUID + "_gitFetchInterval", 30);
+                return gitFetchInterval;
+            }
+            set
+            {
+                EditorPrefs.SetInt(PlayerSettings.productGUID + "_gitFetchInterval", value);
+            }
+        }
+
+        public bool BuildAfterGitPull
+        {
+            get
+            {
+                bool autoBuildOnChange = EditorPrefs.GetBool(PlayerSettings.productGUID + "_buildAfterGitPull", false);
+                return autoBuildOnChange;
+            }
+            set
+            {
+                EditorPrefs.SetBool(PlayerSettings.productGUID + "_buildAfterGitPull", value);
+            }
+        }
+
+        public PullMode GitPullMode
+        {
+            get
+            {
+                int gitPullMode = EditorPrefs.GetInt(PlayerSettings.productGUID + "_gitPullMode", 0);
+                return (PullMode)gitPullMode;
+            }
+            set
+            {
+                EditorPrefs.SetInt(PlayerSettings.productGUID + "_gitPullMode", (int)value);
+            }
+        }
+
         public static SettingsFile Create(string path)
         {
             SettingsFile file = new SettingsFile(path);
@@ -125,7 +183,6 @@ namespace Popcron.Builder
 
                 file.buildsDirectory = buildsFolder;
                 file.currentBuildDirectory = gameFolder;
-
                 file.gameName = productName;
                 file.executableName = productName;
 

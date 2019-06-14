@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEditor;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace Popcron.Builder
 {
@@ -131,97 +129,114 @@ namespace Popcron.Builder
             EditorGUILayout.HelpBox(string.Join("\n", lines), MessageType.Info);
 
             EditorGUILayout.LabelField("Blacklists", EditorStyles.boldLabel);
+            {
+                EditorGUI.indentLevel++;
+                DrawBlacklistedDirectories();
+                DrawBlacklistedFiles();
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.LabelField("General", EditorStyles.boldLabel);
+            {
+                EditorGUI.indentLevel++;
+                Settings.File.UploadAfterBuild = EditorGUILayout.Toggle("Upload after building", Settings.File.UploadAfterBuild);
 
-            DrawBlacklistedDirectories();
-            DrawBlacklistedFiles();
+                int min = 30;
+                int max = 60 * 10;
+                Settings.File.GitFetchInterval = EditorGUILayout.IntSlider("Fetch interval (s)", Settings.File.GitFetchInterval, min, max);
+                Settings.File.BuildAfterGitPull = EditorGUILayout.Toggle("Build after pull", Settings.File.BuildAfterGitPull);
+                Settings.File.GitPullMode = (PullMode)EditorGUILayout.EnumPopup("Pull mode", Settings.File.GitPullMode);
 
+                EditorGUILayout.HelpBox(string.Join("\n", lines), MessageType.Info);
+                EditorGUI.indentLevel--;
+            }
             EditorGUILayout.LabelField("Services", EditorStyles.boldLabel);
-
-            //draw services settings
-            List<Service> services = Clone(Builder.Services);
-            bool changed = false;
-
-            EditorGUI.indentLevel++;
-
-            //resize field
-            int size = EditorGUILayout.IntField("Size", services.Count);
-            if (size < 0) size = 0;
-            if (size > 8) size = 8;
-            if (size != services.Count)
             {
-                int diff = Mathf.Abs(services.Count - size);
-                if (size > services.Count)
+                //draw services settings
+                List<Service> services = Clone(Builder.Services);
+                bool changed = false;
+
+                EditorGUI.indentLevel++;
+
+                //resize field
+                int size = EditorGUILayout.IntField("Size", services.Count);
+                if (size < 0) size = 0;
+                if (size > 8) size = 8;
+                if (size != services.Count)
                 {
-                    //add more
-                    for (int i = 0; i < diff; i++)
+                    int diff = Mathf.Abs(services.Count - size);
+                    if (size > services.Count)
                     {
-                        Service service = Service.Get("Empty", "Service");
-                        services.Add(service);
-                    }
-
-                    changed = true;
-                }
-                else
-                {
-                    //remove extra
-                    for (int i = 0; i < diff; i++)
-                    {
-                        services.RemoveAt(services.Count - 1);
-                    }
-
-                    changed = true;
-                }
-            }
-
-            //services array
-            for (int i = 0; i < services.Count; i++)
-            {
-                services[i].Index = i;
-                bool show = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowKey + "." + i, false);
-                show = EditorGUILayout.Foldout(show, services[i].Name);
-                if (show)
-                {
-                    EditorGUI.indentLevel++;
-
-                    //draw name field
-                    string name = EditorGUILayout.TextField("Name", services[i].Name);
-                    if (name != services[i].Name)
-                    {
-                        services[i].Name = name;
-                        changed = true;
-                    }
-
-                    //draw type field
-                    int selectedIndex = 0;
-                    var uniqueServices = Service.Services;
-                    string[] displayOptions = new string[uniqueServices.Count];
-                    for (int s = 0; s < uniqueServices.Count; s++)
-                    {
-                        if (uniqueServices[s].typeName == services[i].Type)
+                        //add more
+                        for (int i = 0; i < diff; i++)
                         {
-                            selectedIndex = s;
+                            Service service = Service.Get("Empty", "Service");
+                            services.Add(service);
                         }
-                        displayOptions[s] = uniqueServices[s].typeName;
-                    }
-                    int newIndex = EditorGUILayout.Popup("Type", selectedIndex, displayOptions);
-                    if (newIndex != selectedIndex)
-                    {
-                        services[i] = Service.Get(displayOptions[newIndex], name);
+
                         changed = true;
                     }
+                    else
+                    {
+                        //remove extra
+                        for (int i = 0; i < diff; i++)
+                        {
+                            services.RemoveAt(services.Count - 1);
+                        }
 
-                    //draw service gui
-                    services[i].OnGUI();
-
-                    EditorGUI.indentLevel--;
+                        changed = true;
+                    }
                 }
-                EditorPrefs.SetBool(PlayerSettings.productGUID + ShowKey + "." + i, show);
-            }
 
-            if (changed)
-            {
-                Builder.Services = services;
-                Builder.GetServices();
+                //services array
+                for (int i = 0; i < services.Count; i++)
+                {
+                    services[i].Index = i;
+                    bool show = EditorPrefs.GetBool(PlayerSettings.productGUID + ShowKey + "." + i, false);
+                    show = EditorGUILayout.Foldout(show, services[i].Name);
+                    if (show)
+                    {
+                        EditorGUI.indentLevel++;
+
+                        //draw name field
+                        string name = EditorGUILayout.TextField("Name", services[i].Name);
+                        if (name != services[i].Name)
+                        {
+                            services[i].Name = name;
+                            changed = true;
+                        }
+
+                        //draw type field
+                        int selectedIndex = 0;
+                        var uniqueServices = Service.Services;
+                        string[] displayOptions = new string[uniqueServices.Count];
+                        for (int s = 0; s < uniqueServices.Count; s++)
+                        {
+                            if (uniqueServices[s].typeName == services[i].Type)
+                            {
+                                selectedIndex = s;
+                            }
+                            displayOptions[s] = uniqueServices[s].typeName;
+                        }
+                        int newIndex = EditorGUILayout.Popup("Type", selectedIndex, displayOptions);
+                        if (newIndex != selectedIndex)
+                        {
+                            services[i] = Service.Get(displayOptions[newIndex], name);
+                            changed = true;
+                        }
+
+                        //draw service gui
+                        services[i].OnGUI();
+
+                        EditorGUI.indentLevel--;
+                    }
+                    EditorPrefs.SetBool(PlayerSettings.productGUID + ShowKey + "." + i, show);
+                }
+
+                if (changed)
+                {
+                    Builder.Services = services;
+                    Builder.GetServices();
+                }
             }
 
             EditorGUI.indentLevel--;
