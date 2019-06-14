@@ -151,7 +151,7 @@ namespace Popcron.Builder
 					if (EditorApplication.timeSinceStartup > lastGitCheck + 5)
 					{
 						lastGitCheck = EditorApplication.timeSinceStartup;
-						gitExecutable = GitExecutablePath();
+						gitExecutable = ProjectChangeChecker.GitExecutablePath();
 					}
 				}
 				
