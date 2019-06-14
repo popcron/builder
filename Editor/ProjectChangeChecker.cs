@@ -53,9 +53,16 @@ namespace Popcron.Builder
 
 					if (Directory.Exists(Path.Combine(path, ".git")))
 					{
+						string fileName = "cmd.exe";
+						int platform = (int)System.Environment.OSVersion.Platform;
+						if (platform == 4 || platform == 6 || platform == 128)
+						{
+							fileName = "/bin/bash";
+						}
+						
 						ProcessStartInfo info = new ProcessStartInfo
 						{
-							FileName = "cmd.exe",
+							FileName = fileName,
 							RedirectStandardInput = true,
 							UseShellExecute = false,
 							CreateNoWindow = true
