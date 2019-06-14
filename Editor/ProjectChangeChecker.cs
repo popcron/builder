@@ -73,7 +73,7 @@ namespace Popcron.Builder
 						writer.WriteLine("git pull");
 					}
 
-					//Debug.Log("finished pulling");
+					Builder.Build(Builder.CurrentPlatform);
 				}
 				else
 				{
