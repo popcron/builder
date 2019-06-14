@@ -20,15 +20,15 @@ namespace Popcron.Builder
 
         private static void OnUpdate()
         {
-            float interval = Settings.File.GitFetchInterval;
-            float lastGitFetch = EditorPrefs.GetFloat(PlayerSettings.productGUID + "_lastGitFetch", 0f);
-            if (EditorApplication.timeSinceStartup > lastGitFetch + interval)
-            {
-                lastGitFetch = (float)EditorApplication.timeSinceStartup;
-                EditorPrefs.SetFloat(PlayerSettings.productGUID + "_lastGitFetch", lastGitFetch);
+			float interval = Settings.File.GitFetchInterval;
+			float lastGitFetch = EditorPrefs.GetFloat(PlayerSettings.productGUID + "_lastGitFetch", 0f);
+			if (EditorApplication.timeSinceStartup > lastGitFetch + interval)
+			{
+				lastGitFetch = (float)EditorApplication.timeSinceStartup;
+				EditorPrefs.SetFloat(PlayerSettings.productGUID + "_lastGitFetch", lastGitFetch);
 
-                GitFetch();
-            }
+				GitFetch();
+			}
         }
 
         /// <summary>
@@ -36,51 +36,54 @@ namespace Popcron.Builder
         /// </summary>
         private static void GitFetch()
         {
-            string gitExecutable = GitExecutablePath();
-            if (!string.IsNullOrEmpty(gitExecutable))
-            {
-                string path = Directory.GetParent(Application.dataPath).FullName;
-                if (!Directory.Exists(Path.Combine(path, ".git")))
-                {
-                    path = Directory.GetParent(path).FullName;
-                }
-                if (!Directory.Exists(Path.Combine(path, ".git")))
-                {
-                    path = Directory.GetParent(path).FullName;
-                }
+			if (Settings.File.BuildAfterGitPull)
+			{
+				string gitExecutable = GitExecutablePath();
+				if (!string.IsNullOrEmpty(gitExecutable))
+				{
+					string path = Directory.GetParent(Application.dataPath).FullName;
+					if (!Directory.Exists(Path.Combine(path, ".git")))
+					{
+						path = Directory.GetParent(path).FullName;
+					}
+					if (!Directory.Exists(Path.Combine(path, ".git")))
+					{
+						path = Directory.GetParent(path).FullName;
+					}
 
-                if (Directory.Exists(Path.Combine(path, ".git")))
-                {
-                    ProcessStartInfo info = new ProcessStartInfo
-                    {
-                        FileName = "cmd.exe",
-                        RedirectStandardInput = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
+					if (Directory.Exists(Path.Combine(path, ".git")))
+					{
+						ProcessStartInfo info = new ProcessStartInfo
+						{
+							FileName = "cmd.exe",
+							RedirectStandardInput = true,
+							UseShellExecute = false,
+							CreateNoWindow = true
+						};
 
-                    Process process = Process.Start(info);
-                    using (StreamWriter writer = process.StandardInput)
-                    {
-                        writer.WriteLine("cd \"" + path + "\"");
-                        writer.WriteLine("git fetch");
-                        writer.WriteLine("git pull");
-                    }
+						Process process = Process.Start(info);
+						using (StreamWriter writer = process.StandardInput)
+						{
+							writer.WriteLine("cd \"" + path + "\"");
+							writer.WriteLine("git fetch");
+							writer.WriteLine("git pull");
+						}
 
-                    Debug.Log("finished pulling");
-                }
-                else
-                {
-                    Debug.LogError("Could't find a .git folder. Is this an actual repository?.");
-                }
-            }
-            else
-            {
-                Debug.LogError("Couldn't find git.exe. Make sure that a path to its directory exists in the PATH environment variable.");
-            }
+						//Debug.Log("finished pulling");
+					}
+					else
+					{
+						Debug.LogError("Could't find a .git folder. Is this an actual repository?.");
+					}
+				}
+				else
+				{
+					Debug.LogError("Couldn't find git.exe. Make sure that a path to its directory exists in the PATH environment variable.");
+				}
+			}
         }
 
-        private static string GitExecutablePath()
+        public static string GitExecutablePath()
         {
             IDictionary variables = Environment.GetEnvironmentVariables();
             foreach (string item in variables.Keys)

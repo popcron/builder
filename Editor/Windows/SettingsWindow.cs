@@ -9,6 +9,8 @@ namespace Popcron.Builder
     public class SettingsWindow : EditorWindow
     {
         private const string ShowKey = "Popcron.Builder.ShowService";
+		private double lastGitCheck = 0.0;
+		private string gitExecutable = "null";
 
         [MenuItem("Popcron/Builder/Settings")]
         public static void Initialize()
@@ -98,7 +100,6 @@ namespace Popcron.Builder
         private void OnGUI()
         {
             Repaint();
-
             Window.DrawHeader("Settings", "");
 
             float width = Mathf.Max(100f, Screen.width / 3f);
@@ -140,13 +141,28 @@ namespace Popcron.Builder
                 EditorGUI.indentLevel++;
                 Settings.File.UploadAfterBuild = EditorGUILayout.Toggle("Upload after building", Settings.File.UploadAfterBuild);
 
-                int min = 30;
-                int max = 60 * 10;
-                Settings.File.GitFetchInterval = EditorGUILayout.IntSlider("Fetch interval (s)", Settings.File.GitFetchInterval, min, max);
                 Settings.File.BuildAfterGitPull = EditorGUILayout.Toggle("Build after pull", Settings.File.BuildAfterGitPull);
-                Settings.File.GitPullMode = (PullMode)EditorGUILayout.EnumPopup("Pull mode", Settings.File.GitPullMode);
-
-                EditorGUILayout.HelpBox(string.Join("\n", lines), MessageType.Info);
+                if (Settings.File.BuildAfterGitPull)
+				{
+					int min = 30;
+					int max = 60 * 10;
+					Settings.File.GitFetchInterval = EditorGUILayout.IntSlider("Fetch interval (s)", Settings.File.GitFetchInterval, min, max);
+					//Settings.File.GitPullMode = (PullMode)EditorGUILayout.EnumPopup("Pull mode", Settings.File.GitPullMode);
+					if (EditorApplication.timeSinceStartup > lastGitCheck + 5)
+					{
+						lastGitCheck = EditorApplication.timeSinceStartup;
+						gitExecutable = GitExecutablePath();
+					}
+				}
+				
+				if (string.IsNullOrEmpty(gitExecutable))
+				{
+					EditorGUILayout.HelpBox("Git executable not found in the environment table.", MessageType.Error);	
+				}
+				else
+				{
+					EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Log);	
+				}
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.LabelField("Services", EditorStyles.boldLabel);
