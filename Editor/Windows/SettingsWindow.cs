@@ -161,7 +161,7 @@ namespace Popcron.Builder
 				}
 				else
 				{
-					EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Log);	
+					EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Info);	
 				}
                 EditorGUI.indentLevel--;
             }
