@@ -1,7 +1,7 @@
 {
     "name": "com.popcron.builder",
     "displayName": "Popcron Builder",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "unity": "2018.3",
     "description": "Quick builder tool."
 }

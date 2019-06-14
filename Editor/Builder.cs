@@ -222,6 +222,13 @@ namespace Popcron.Builder
             Building = false;
         }
 
+        private static string GetParent(string path)
+        {
+            path = path.Replace("\\", "/");
+            int last = path.LastIndexOf('/');
+            return path.Substring(0, last);
+        }
+
         [PostProcessBuild(1)]
         public static void OnPostprocessBuild(BuildTarget target, string path)
         {
@@ -229,11 +236,15 @@ namespace Popcron.Builder
             string version = GetBuiltVersion(platform);
 
             string root = Path.GetFullPath(Settings.File.BuildsDirectory);
-            if (path.StartsWith("/"))
+
+            //only trim on windows
+            int os = (int)Environment.OSVersion.Platform;
+            if (os != 4 && os != 6 && os != 128)
             {
-                path = path.Substring(1);
+                path = path.TrimStart('/');
             }
-            path = Directory.GetParent(path).FullName;
+
+            path = GetParent(path);
 
             DateTime buildTime = DateTime.Now;
             string date = buildTime.ToString();
@@ -525,7 +536,7 @@ namespace Popcron.Builder
         public static void Play(string platform)
         {
             string path = GetPlayPath(platform);
-            string outputPath = Directory.GetParent(path).FullName + "/Output.txt";
+            string outputPath = Path.Combine(GetParent(path), "Output.txt");
 
             Process gameProcess = new Process();
 

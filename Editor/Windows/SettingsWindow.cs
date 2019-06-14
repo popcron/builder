@@ -9,8 +9,8 @@ namespace Popcron.Builder
     public class SettingsWindow : EditorWindow
     {
         private const string ShowKey = "Popcron.Builder.ShowService";
-		private double lastGitCheck = 0.0;
-		private string gitExecutable = "default";
+        private double lastGitCheck = 0.0;
+        private string gitExecutable = "default";
 
         [MenuItem("Popcron/Builder/Settings")]
         public static void Initialize()
@@ -143,30 +143,30 @@ namespace Popcron.Builder
 
                 Settings.File.BuildAfterGitPull = EditorGUILayout.Toggle("Build after pull", Settings.File.BuildAfterGitPull);
                 if (Settings.File.BuildAfterGitPull)
-				{
-					int min = 30;
-					int max = 60 * 10;
-					Settings.File.GitFetchInterval = EditorGUILayout.IntSlider("Fetch interval (s)", Settings.File.GitFetchInterval, min, max);
-					//Settings.File.GitPullMode = (PullMode)EditorGUILayout.EnumPopup("Pull mode", Settings.File.GitPullMode);
-					if (EditorApplication.timeSinceStartup > lastGitCheck + 5)
-					{
-						lastGitCheck = EditorApplication.timeSinceStartup;
-						gitExecutable = ProjectChangeChecker.GitExecutablePath();
-					}
-					
-					if (string.IsNullOrEmpty(gitExecutable))
-					{
-						EditorGUILayout.HelpBox("Git executable not found in the environment table.", MessageType.Error);	
-					}
-					else
-					{
-						if (gitExecutable != "default")
-						{
-							EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Info);	
-						}
-					}
-				}
-				
+                {
+                    int min = 30;
+                    int max = 60 * 10;
+                    Settings.File.GitFetchInterval = EditorGUILayout.IntSlider("Fetch interval (s)", Settings.File.GitFetchInterval, min, max);
+                    //Settings.File.GitPullMode = (PullMode)EditorGUILayout.EnumPopup("Pull mode", Settings.File.GitPullMode);
+                    if (EditorApplication.timeSinceStartup > lastGitCheck + 5)
+                    {
+                        lastGitCheck = EditorApplication.timeSinceStartup;
+                        gitExecutable = ProjectChangeChecker.GitExecutablePath();
+                    }
+
+                    if (string.IsNullOrEmpty(gitExecutable))
+                    {
+                        EditorGUILayout.HelpBox("Git executable not found in the environment table.", MessageType.Error);
+                    }
+                    else
+                    {
+                        if (gitExecutable != "default")
+                        {
+                            EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Info);
+                        }
+                    }
+                }
+
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.LabelField("Services", EditorStyles.boldLabel);
