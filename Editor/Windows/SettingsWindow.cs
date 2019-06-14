@@ -10,7 +10,7 @@ namespace Popcron.Builder
     {
         private const string ShowKey = "Popcron.Builder.ShowService";
 		private double lastGitCheck = 0.0;
-		private string gitExecutable = "null";
+		private string gitExecutable = "default";
 
         [MenuItem("Popcron/Builder/Settings")]
         public static void Initialize()
@@ -153,16 +153,20 @@ namespace Popcron.Builder
 						lastGitCheck = EditorApplication.timeSinceStartup;
 						gitExecutable = ProjectChangeChecker.GitExecutablePath();
 					}
+					
+					if (string.IsNullOrEmpty(gitExecutable))
+					{
+						EditorGUILayout.HelpBox("Git executable not found in the environment table.", MessageType.Error);	
+					}
+					else
+					{
+						if (gitExecutable != "default")
+						{
+							EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Info);	
+						}
+					}
 				}
 				
-				if (string.IsNullOrEmpty(gitExecutable))
-				{
-					EditorGUILayout.HelpBox("Git executable not found in the environment table.", MessageType.Error);	
-				}
-				else
-				{
-					EditorGUILayout.HelpBox("Will use " + gitExecutable + " to fetch and pull commits automatically.", MessageType.Info);	
-				}
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.LabelField("Services", EditorStyles.boldLabel);
