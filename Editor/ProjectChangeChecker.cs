@@ -38,79 +38,48 @@ namespace Popcron.Builder
         {
 			if (Settings.File.BuildAfterGitPull)
 			{
-				string gitExecutable = GitExecutablePath();
-				if (!string.IsNullOrEmpty(gitExecutable))
+				string path = Directory.GetParent(Application.dataPath).FullName;
+				if (!Directory.Exists(Path.Combine(path, ".git")))
 				{
-					string path = Directory.GetParent(Application.dataPath).FullName;
-					if (!Directory.Exists(Path.Combine(path, ".git")))
+					path = Directory.GetParent(path).FullName;
+				}
+				if (!Directory.Exists(Path.Combine(path, ".git")))
+				{
+					path = Directory.GetParent(path).FullName;
+				}
+
+				if (Directory.Exists(Path.Combine(path, ".git")))
+				{
+					string fileName = "cmd.exe";
+					int platform = (int)System.Environment.OSVersion.Platform;
+					if (platform == 4 || platform == 6 || platform == 128)
 					{
-						path = Directory.GetParent(path).FullName;
+						fileName = "/bin/bash";
 					}
-					if (!Directory.Exists(Path.Combine(path, ".git")))
+					
+					ProcessStartInfo info = new ProcessStartInfo
 					{
-						path = Directory.GetParent(path).FullName;
+						FileName = fileName,
+						RedirectStandardInput = true,
+						UseShellExecute = false,
+						CreateNoWindow = true
+					};
+
+					Process process = Process.Start(info);
+					using (StreamWriter writer = process.StandardInput)
+					{
+						writer.WriteLine("cd \"" + path + "\"");
+						writer.WriteLine("git fetch");
+						writer.WriteLine("git pull");
 					}
 
-					if (Directory.Exists(Path.Combine(path, ".git")))
-					{
-						string fileName = "cmd.exe";
-						int platform = (int)System.Environment.OSVersion.Platform;
-						if (platform == 4 || platform == 6 || platform == 128)
-						{
-							fileName = "/bin/bash";
-						}
-						
-						ProcessStartInfo info = new ProcessStartInfo
-						{
-							FileName = fileName,
-							RedirectStandardInput = true,
-							UseShellExecute = false,
-							CreateNoWindow = true
-						};
-
-						Process process = Process.Start(info);
-						using (StreamWriter writer = process.StandardInput)
-						{
-							writer.WriteLine("cd \"" + path + "\"");
-							writer.WriteLine("git fetch");
-							writer.WriteLine("git pull");
-						}
-
-						//Debug.Log("finished pulling");
-					}
-					else
-					{
-						Debug.LogError("Could't find a .git folder. Is this an actual repository?.");
-					}
+					//Debug.Log("finished pulling");
 				}
 				else
 				{
-					Debug.LogError("Couldn't find git.exe. Make sure that a path to its directory exists in the PATH environment variable.");
+					Debug.LogError("Could't find a .git folder. Is this an actual repository?.");
 				}
 			}
-        }
-
-        public static string GitExecutablePath()
-        {
-            IDictionary variables = Environment.GetEnvironmentVariables();
-            foreach (string item in variables.Keys)
-            {
-                string value = Environment.GetEnvironmentVariable(item);
-                if (item.ToLower() == "path")
-                {
-                    string[] paths = value.Split(';');
-                    for (int i = 0; i < paths.Length; i++)
-                    {
-                        string gitExe = Path.Combine(paths[i], "git.exe");
-                        if (File.Exists(gitExe))
-                        {
-                            return gitExe;
-                        }
-                    }
-                }
-            }
-
-            return null;
         }
 
         [PostProcessBuild(2)]
