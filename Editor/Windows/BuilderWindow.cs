@@ -58,8 +58,6 @@ namespace Popcron.Builder
                 return;
             }
 
-            Event e = Event.current;
-
             //loop through the services, and toggle each setting
             int uploadServices = 0;
             List<Service> services = Builder.Services;
@@ -87,7 +85,7 @@ namespace Popcron.Builder
             int currentIndex = IndexOf(platform, platforms);
 
             platform = platforms[GUI.Toolbar(new Rect(0, lastRect.y + lastRect.height + 5, Screen.width, 20), currentIndex, platforms, EditorStyles.toolbarButton)];
-            EditorPrefs.SetString(Settings.File.GameName + "_buildPlatform", platform);
+            EditorPrefs.SetString(PlayerSettings.productGUID + "_buildPlatform", platform);
 
             GUILayout.Space(25);
 

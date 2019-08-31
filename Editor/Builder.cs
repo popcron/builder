@@ -309,7 +309,7 @@ namespace Popcron.Builder
         public static BuildTarget PlatformToTarget(string platform)
         {
             if (platform == "win") return BuildTarget.StandaloneWindows64;
-            if (platform == "linux") return BuildTarget.StandaloneLinuxUniversal;
+            if (platform == "linux") return BuildTarget.StandaloneLinux64;
             if (platform == "mac") return BuildTarget.StandaloneOSX;
             if (platform == "webgl") return BuildTarget.WebGL;
             if (platform == "android") return BuildTarget.Android;
@@ -321,7 +321,7 @@ namespace Popcron.Builder
         {
             if (target == BuildTarget.StandaloneWindows64) return "win";
             if (target == BuildTarget.StandaloneOSX) return "mac";
-            if (target == BuildTarget.StandaloneLinuxUniversal) return "linux";
+            if (target == BuildTarget.StandaloneLinux64) return "linux";
             if (target == BuildTarget.WebGL) return "webgl";
             if (target == BuildTarget.Android) return "android";
 
@@ -378,6 +378,7 @@ namespace Popcron.Builder
             Building = true;
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
+            Debug.Log("Building to: " + path + "\nTarget: " + target);
 
             //ensure that the directory exists
             string folder = GetBuildFolder(platform);
@@ -418,8 +419,7 @@ namespace Popcron.Builder
                 options = BuildOptions.None;
             }
 
-            //UnityEngine.Debug.Log("path: " + path + ", target: " + target + ", options: " + options);
-            BuildReport report = null;
+            BuildReport report;
             if (ScriptingImplementation == ScriptingImplementation.IL2CPP)
             {
                 //try to use il2cpp

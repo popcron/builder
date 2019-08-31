@@ -84,12 +84,22 @@ namespace Popcron.Builder
         {
             get
             {
-                string typeName = "Popcron.Builder.GameInfo, Assembly-CSharp";
-                Type type = Type.GetType(typeName);
-                if (type != null)
+                string typeName = "GameInfo";
+                Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                for (int a = 0; a < assemblies.Length; a++)
                 {
-                    FieldInfo property = type.GetField("Version", BindingFlags.Public | BindingFlags.Static);
-                    return (string)property.GetRawConstantValue();
+                    Type[] types = assemblies[a].GetTypes();
+                    for (int t = 0; t < types.Length; t++)
+                    {
+                        if (types[t].Name == typeName)
+                        {
+                            FieldInfo property = types[t].GetField("Version", BindingFlags.Public | BindingFlags.Static);
+                            if (property != null && property.FieldType == typeof(string))
+                            {
+                                return (string)property.GetRawConstantValue();
+                            }
+                        }
+                    }
                 }
 
                 return "null";
