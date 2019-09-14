@@ -6,6 +6,8 @@ namespace Popcron.Builder
 {
     public class BuilderWindow : EditorWindow
     {
+		private static double lastTime;
+		
         [MenuItem("Popcron/Builder/Builder")]
         public static void Initialize()
         {
@@ -43,7 +45,12 @@ namespace Popcron.Builder
 
         private void OnGUI()
         {
-            Repaint();
+			if (EditorApplication.timeSinceStartup > lastTime)
+			{
+				lastTime = EditorApplication.timeSinceStartup + 1;
+				Repaint();
+			}
+			
             Window.DrawHeader("", "");
             DrawVersionInformation();
 

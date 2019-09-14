@@ -98,7 +98,6 @@ namespace Popcron.Builder
 
         private void OnGUI()
         {
-            Repaint();
             Window.DrawHeader("Settings", "");
 
             float width = Mathf.Max(100f, Screen.width / 3f);
