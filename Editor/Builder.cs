@@ -154,6 +154,10 @@ namespace Popcron.Builder
 
                     string data = string.Join(":", lines);
                     EditorPrefs.SetString(PlayerSettings.productGUID + ServicesKey, data);
+					if (BuilderWindow.Instance)
+					{
+						BuilderWindow.Instance.Repaint();
+					}
                 }
             }
         }
@@ -167,6 +171,10 @@ namespace Popcron.Builder
         internal static void ClearLog()
         {
             EditorPrefs.SetString(PlayerSettings.productGUID + LogKey, "");
+			if (BuilderWindow.Instance)
+			{
+				BuilderWindow.Instance.Repaint();
+			}
         }
 
         internal static List<(string text, MessageType type)> Log
@@ -213,6 +221,10 @@ namespace Popcron.Builder
 
             string pref = string.Join("\n", data);
             EditorPrefs.SetString(PlayerSettings.productGUID + LogKey, pref);
+			if (BuilderWindow.Instance)
+			{
+				BuilderWindow.Instance.Repaint();
+			}
         }
 
         internal static void Reset()

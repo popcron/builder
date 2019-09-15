@@ -6,12 +6,15 @@ namespace Popcron.Builder
 {
     public class BuilderWindow : EditorWindow
     {
+		public static BuilderWindow Instance { get; private set; } = null;
+		
 		private static double lastTime;
 		
         [MenuItem("Popcron/Builder/Builder")]
         public static void Initialize()
         {
             BuilderWindow window = GetWindow<BuilderWindow>(false, "Builder");
+            Instance = window;
         }
 
         private int IndexOf(string predicate, string[] options)
@@ -42,15 +45,21 @@ namespace Popcron.Builder
                 SettingsWindow.Initialize();
             }
         }
+		
+        private void OnEnable()
+        {
+            Instance = this;
+        }
 
         private void OnGUI()
         {
-			if (EditorApplication.timeSinceStartup > lastTime)
-			{
-				lastTime = EditorApplication.timeSinceStartup + 1;
-				Repaint();
-			}
-			
+            Instance = this;
+            if (EditorApplication.timeSinceStartup > lastTime)
+            {
+                lastTime = EditorApplication.timeSinceStartup + 1;
+                Repaint();
+            }
+            
             Window.DrawHeader("", "");
             DrawVersionInformation();
 
