@@ -9,6 +9,7 @@ using Debug = UnityEngine.Debug;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Build.Reporting;
+using System.Reflection;
 
 namespace Popcron.Builder
 {
@@ -154,10 +155,10 @@ namespace Popcron.Builder
 
                     string data = string.Join(":", lines);
                     EditorPrefs.SetString(PlayerSettings.productGUID + ServicesKey, data);
-					if (BuilderWindow.Instance)
-					{
-						BuilderWindow.Instance.Repaint();
-					}
+                    if (BuilderWindow.Instance)
+                    {
+                        BuilderWindow.Instance.Repaint();
+                    }
                 }
             }
         }
@@ -171,10 +172,10 @@ namespace Popcron.Builder
         internal static void ClearLog()
         {
             EditorPrefs.SetString(PlayerSettings.productGUID + LogKey, "");
-			if (BuilderWindow.Instance)
-			{
-				BuilderWindow.Instance.Repaint();
-			}
+            if (BuilderWindow.Instance)
+            {
+                BuilderWindow.Instance.Repaint();
+            }
         }
 
         internal static List<(string text, MessageType type)> Log
@@ -221,10 +222,10 @@ namespace Popcron.Builder
 
             string pref = string.Join("\n", data);
             EditorPrefs.SetString(PlayerSettings.productGUID + LogKey, pref);
-			if (BuilderWindow.Instance)
-			{
-				BuilderWindow.Instance.Repaint();
-			}
+            if (BuilderWindow.Instance)
+            {
+                BuilderWindow.Instance.Repaint();
+            }
         }
 
         internal static void Reset()
@@ -387,18 +388,22 @@ namespace Popcron.Builder
 
         public static void Build(string platform)
         {
+            //find all scripts that have an OnPreBuild method, and call it
+            OnPreBuild();
+
             Building = true;
             BuildTarget target = PlatformToTarget(platform);
             string path = GetBuildPath(platform);
-            Debug.Log("Building to: " + path + "\nTarget: " + target);
+            Log.Add(("Building to: " + path + "\nTarget: " + target, MessageType.Info));
 
             //ensure that the directory exists
             string folder = GetBuildFolder(platform);
-            if (!Directory.Exists(folder))
+            if (Directory.Exists(folder))
             {
-                Directory.CreateDirectory(folder);
+                Directory.Delete(folder, true);
             }
 
+            Directory.CreateDirectory(folder);
             EditorPrefs.SetString(Settings.File.GameName + "_builtVersion_" + platform, Settings.CurrentVersion);
 
             //create the scenes array using the build settings
@@ -409,75 +414,67 @@ namespace Popcron.Builder
                 scenes[i] = scene.path;
             }
 
-            //rebuild folder by deleting
-            //and then by creating a new one
-
             //compile gameinfo file
             GameInfoGenerator.CompileGameInfo(platform, Settings.CurrentVersion);
 
-            //find all scripts that have an OnPreBuild method, and call it
-            OnPreBuild();
-
-            BuildOptions options = BuildOptions.CompressWithLz4HC | BuildOptions.AcceptExternalModificationsToPlayer;
-            if (ProfilerDebug)
-            {
-                options |= BuildOptions.ConnectWithProfiler;
-            }
-
-            //if on android, set build mode to mono and use custom options
-            if (platform == "android")
-            {
-                PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
-                options = BuildOptions.None;
-            }
-
             BuildReport report;
+            BuildPlayerOptions options = new BuildPlayerOptions()
+            {
+                scenes = scenes,
+                locationPathName = path,
+                target = target,
+                options = BuildOptions.None
+            };
+
             if (ScriptingImplementation == ScriptingImplementation.IL2CPP)
             {
                 //try to use il2cpp
                 PlayerSettings.SetIncrementalIl2CppBuild(BuildTargetGroup.Standalone, true);
                 PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.IL2CPP);
-                report = BuildPipeline.BuildPlayer(scenes, path, target, options);
+                report = BuildPipeline.BuildPlayer(options);
                 if (report.summary.result == BuildResult.Failed)
                 {
                     //il2cpp failed, so try mono
                     PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
-                    report = BuildPipeline.BuildPlayer(scenes, path, target, options);
+                    report = BuildPipeline.BuildPlayer(options);
                 }
             }
             else
             {
                 PlayerSettings.SetScriptingBackend(BuildTargetGroup.Standalone, ScriptingImplementation.Mono2x);
-                report = BuildPipeline.BuildPlayer(scenes, path, target, options);
+                report = BuildPipeline.BuildPlayer(options);
             }
 
             //success
-            if (report.summary.result != BuildResult.Succeeded)
+            if (report.summary.result == BuildResult.Succeeded)
             {
-                Building = false;
+                Log.Add(($"Build result: {report.summary.result}", MessageType.Info));
             }
+            else
+            {
+                Log.Add(($"Build result: {report.summary.result}", MessageType.Error));
+            }
+
+            Building = false;
         }
 
-        private static void CallAll(string methodName, string namepace = null, params object[] arguments)
+        private static void CallAll(string methodName, params object[] arguments)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach (var assembly in assemblies)
+            int argumentsCount = arguments?.Length ?? 0;
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (Assembly assembly in assemblies)
             {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
+                Type[] types = assembly.GetTypes();
+                foreach (Type type in types)
                 {
-                    if (type == typeof(Builder)) continue;
-                    if (type.Namespace != null)
+                    if (type != typeof(Builder))
                     {
-                        if (namepace == null || type.Namespace.StartsWith(namepace))
+                        MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                        foreach (MethodInfo method in methods)
                         {
-                            var methods = type.GetMethods();
-                            foreach (var method in methods)
+                            if (method.Name == methodName && method.GetParameters().Length == argumentsCount)
                             {
-                                if (method.Name == methodName)
-                                {
-                                    method.Invoke(null, arguments);
-                                }
+                                method.Invoke(null, arguments);
                             }
                         }
                     }
@@ -487,19 +484,13 @@ namespace Popcron.Builder
 
         private static void OnPreBuild()
         {
-            const string methodName = "OnPreBuild";
-
             //call the OnPreBuild method from any namespace
-            CallAll(methodName, null, null);
-
-            //call the addressable systems method
-            CallAll("AddressableAssetSettings.BuildPlayerContent", null, null);
+            CallAll("OnPreBuild");
         }
 
         private static void OnPostBuild(string platform, string path)
         {
-            const string methodName = "OnPostBuild";
-            CallAll(methodName, null, platform, path);
+            CallAll("OnPostBuild", platform, path);
 
             if (PlayOnBuild)
             {

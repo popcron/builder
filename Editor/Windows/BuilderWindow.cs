@@ -139,6 +139,7 @@ namespace Popcron.Builder
                 {
                     Builder.Build(platform);
                 }
+
                 if (GUILayout.Button("Build + Play", EditorStyles.miniButtonMid, GUILayout.Height(20)))
                 {
                     Builder.BuildAndPlay(platform);
